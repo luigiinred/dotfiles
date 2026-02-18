@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "jira-confluencegusto": {
+      "url": "https://anysource.production.it-services.gustocorp.com/api/v1/proxy/67c92b0d-16e5-4683-bd00-ed298237b53d/mcp",
+      "headers": {}
+    },
+    "gmailgusto": {
+      "url": "https://anysource.production.it-services.gustocorp.com/api/v1/proxy/594e41f9-f34f-4804-8232-7c8561f00a56/mcp",
+      "headers": {}
+    },
+    "maestro": {
+      "command": "{{ .chezmoi.homeDir }}/.maestro/bin/maestro",
+      "args": ["mcp"]
+    }
+  }
+}
