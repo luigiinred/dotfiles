@@ -1,5 +1,5 @@
 ---
-name: dev-workflow-execute-ticket
+name: dev-workflow-start-work
 description: Start or resume work on a Jira ticket by extracting ticket ID from branch name, fetching requirements via Jira MCP, creating an implementation plan, and executing it. Use when the user wants to start ticket work, resume a ticket, implement Jira requirements, begin coding on a branch, or mentions "start the ticket" or "execute the ticket".
 ---
 
@@ -282,13 +282,13 @@ Options:
 1. "I'm working on a specific ticket" → Prompt for ticket ID
 2. "This is unticketed work (use RETIRE-1908)" → Use placeholder ticket
 3. "Let me check out a different branch" → List recent branches
-4. "I want to create a new branch for a ticket" → Use dev-workflow-start-ticket skill
+4. "I want to create a new branch for a ticket" → Use dev-workflow-initialize skill
 ```
 
 **If user provides ticket ID**: Proceed with that ticket (Step 2)
 **If unticketed work**: Use RETIRE-1908 as placeholder, create plan based on user description
 **If switching branches**: Help them switch, then re-run workflow
-**If creating new branch**: Delegate to the `dev-workflow-start-ticket` skill
+**If creating new branch**: Delegate to the `dev-workflow-initialize` skill
 
 ## Edge Cases
 
@@ -344,7 +344,7 @@ If the ticket is very large:
 
 This skill works well with:
 
-- **dev-workflow-start-ticket**: For creating new branches with tickets
+- **dev-workflow-initialize**: For creating new branches with tickets
 - **dev-workflow-prepare-commit**: Used when atomic or manual commit strategy is chosen
 - **push-changes**: For pushing commits when work is complete
 - **dev-workflow-create-pr**: For opening pull requests after pushing

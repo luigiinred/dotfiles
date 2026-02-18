@@ -10,22 +10,22 @@ Run the complete ticket lifecycle back-to-back: create branch, implement, commit
 ## Pipeline
 
 ```
-dev-workflow-start-ticket
+dev-workflow-initialize
         ↓
-dev-workflow-execute-ticket  (includes dev-workflow-prepare-commit when atomic)
+dev-workflow-start-work  (includes dev-workflow-prepare-commit when atomic)
         ↓
   [final commit if needed]   (dev-workflow-prepare-commit)
         ↓
 dev-workflow-create-pr
         ↓
-dev-workflow-review-github-pr
+dev-workflow-review-pr
 ```
 
 ## Workflow
 
 ### Step 1: Start Ticket
 
-Read and follow `~/.cursor/skills/dev-workflow-start-ticket/SKILL.md`.
+Read and follow `~/.cursor/skills/dev-workflow-initialize/SKILL.md`.
 
 This creates the worktree, branch, copies `.env`, runs `npm install`, and optionally opens in Cursor.
 
@@ -33,7 +33,7 @@ When the skill asks "Start Implementation?" at the end, **select "Yes"** automat
 
 ### Step 2: Execute Ticket
 
-Read and follow `~/.cursor/skills/dev-workflow-execute-ticket/SKILL.md`.
+Read and follow `~/.cursor/skills/dev-workflow-start-work/SKILL.md`.
 
 This fetches ticket details, creates an implementation plan, and executes it. The commit strategy prompt still goes to the user (atomic vs single vs manual).
 
@@ -56,7 +56,7 @@ When create-pr offers "Start PR Review?", **select "Yes"** automatically and pro
 
 ### Step 4: Review PR
 
-Read and follow `~/.cursor/skills/dev-workflow-review-github-pr/SKILL.md`.
+Read and follow `~/.cursor/skills/dev-workflow-review-pr/SKILL.md`.
 
 This fetches the PR diff and Jira context, reviews for code quality and security, and posts inline comments.
 

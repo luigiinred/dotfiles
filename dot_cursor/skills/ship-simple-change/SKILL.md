@@ -162,7 +162,7 @@ This skill is the **uninterrupted** variant of the same flow. For interactive st
 
 - **dev-workflow-prepare-commit** — commit with confirmations at each step
 - **dev-workflow-create-pr** — create PR after push, with option to review
-- **dev-workflow-start-ticket** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
+- **dev-workflow-initialize** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
 
 ## Checklist (for the agent)
 

@@ -155,7 +155,7 @@ After reporting the clickable PR URL, **ALWAYS use the AskQuestion tool:**
 
 Based on the response:
 
-- "review" → Read and follow the `dev-workflow-review-github-pr` skill at /Users/timmy.garrabrant/.cursor/skills/dev-workflow-review-github-pr/SKILL.md to perform a comprehensive code review
+- "review" → Read and follow the `dev-workflow-review-pr` skill at /Users/timmy.garrabrant/.cursor/skills/dev-workflow-review-pr/SKILL.md to perform a comprehensive code review
 - "done" → End the workflow
 
 ## Checklist
