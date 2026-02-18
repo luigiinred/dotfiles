@@ -17,7 +17,19 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
 ## Workflow
 
-1. **Re-add changed paths**
+1. **Pull remote changes first**
+
+   ```bash
+   cd ~/.local/share/chezmoi && git pull --rebase
+   ```
+
+   This ensures files added on other machines are incorporated before we layer local changes on top. After pulling, apply the updated source state to the local filesystem:
+
+   ```bash
+   chezmoi apply
+   ```
+
+2. **Re-add changed paths**
 
    ```bash
    chezmoi re-add ~/.cursor/skills ~/.cursor/agents
@@ -25,7 +37,7 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
    If only skills changed, scope to just that path. Adjust as needed.
 
-2. **Check for actual changes**
+3. **Check for actual changes**
 
    ```bash
    cd ~/.local/share/chezmoi && git status --short
@@ -33,7 +45,7 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
    If no changes, stop here — nothing to sync.
 
-3. **Commit and push**
+4. **Commit and push**
 
    ```bash
    cd ~/.local/share/chezmoi && git add -A && git commit -m "$(cat <<'EOF'
