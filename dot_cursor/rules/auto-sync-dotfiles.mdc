@@ -1,0 +1,8 @@
+---
+description: Auto-sync dotfiles after modifying skills or agents
+globs:
+  - "**/.cursor/skills/**"
+  - "**/.cursor/agents/**"
+---
+
+After creating, editing, or deleting any file matching these globs, you MUST run the **sync-dotfiles** skill to sync changes to chezmoi. Read the skill at `~/.cursor/skills/sync-dotfiles/SKILL.md` and follow its workflow.
