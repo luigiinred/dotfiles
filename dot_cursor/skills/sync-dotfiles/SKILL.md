@@ -17,19 +17,7 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
 ## Workflow
 
-1. **Pull remote changes first**
-
-   ```bash
-   cd ~/.local/share/chezmoi && git pull --rebase
-   ```
-
-   This ensures files added on other machines are incorporated before we layer local changes on top. After pulling, apply the updated source state to the local filesystem:
-
-   ```bash
-   chezmoi apply
-   ```
-
-2. **Re-add changed paths**
+1. **Capture local changes first**
 
    ```bash
    chezmoi re-add ~/.cursor/skills ~/.cursor/agents
@@ -37,24 +25,41 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
    If only skills changed, scope to just that path. Adjust as needed.
 
-3. **Check for actual changes**
+2. **Commit local changes**
 
    ```bash
-   cd ~/.local/share/chezmoi && git status --short
+   cd ~/.local/share/chezmoi && git add -A
    ```
 
-   If no changes, stop here — nothing to sync.
-
-4. **Commit and push**
+   Check if there's anything to commit:
 
    ```bash
-   cd ~/.local/share/chezmoi && git add -A && git commit -m "$(cat <<'EOF'
-   chore: sync cursor config
-   EOF
-   )" && git push
+   git diff --cached --quiet || git commit -m "chore: sync cursor config"
    ```
 
-   Use a more specific commit message when the change is clear (e.g. `chore: add new skill foo-bar`).
+3. **Pull remote changes and rebase**
+
+   ```bash
+   cd ~/.local/share/chezmoi && git pull --rebase
+   ```
+
+   Local changes are already committed, so they rebase cleanly on top of remote additions. Both sides are preserved.
+
+4. **Apply merged state locally**
+
+   ```bash
+   chezmoi apply
+   ```
+
+   This writes the combined result (local edits + remote additions) back to the filesystem.
+
+5. **Push**
+
+   ```bash
+   cd ~/.local/share/chezmoi && git push
+   ```
+
+   Use a more specific commit message in step 2 when the change is clear (e.g. `chore: add new skill foo-bar`).
 
 ## Notes
 
