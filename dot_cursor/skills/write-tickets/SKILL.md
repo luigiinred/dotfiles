@@ -1,6 +1,6 @@
 ---
 name: write-tickets
-description: Use when creating Jira tickets, writing project tickets, user stories, bug reports, or tech debt items. This is the skill to use for Jira ticket creation. Gathers requirements interactively, identifies all tickets needed from input, explores codebase for tech context, uses the technical-writer skill to generate each ticket document to a temp file for review, then creates them in JIRA using the jira-expert subagent (RETIRE project for mobile). Falls back to clipboard copy if subagent fails.
+description: Use when creating Jira tickets, writing project tickets, user stories, bug reports, or tech debt items. This is the skill to use for Jira ticket creation. Gathers requirements interactively, identifies all tickets needed from input, explores codebase for tech context, uses the technical-writer skill to generate each ticket document to a temp file for review, then creates them in JIRA using the write-tickets-publish-to-jira skill via acli (RETIRE project for mobile). Falls back to clipboard copy if creation fails.
 ---
 
 # Write Tickets
@@ -9,7 +9,7 @@ description: Use when creating Jira tickets, writing project tickets, user stori
 
 ## Overview
 
-Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured, technically-refined project tickets. Analyzes input to identify all tickets needed, determines proper ordering based on dependencies, then for each ticket: **writes the ticket markdown to a temporary file** for the user to review and edit in their IDE, then creates the ticket in JIRA (or copies to clipboard) and deletes the temp file. JIRA creation uses the jira-expert subagent (mobile defaults: RETIRE, component Consumer, sprint Mobile Refinement). Falls back to clipboard copy if subagent fails.
+Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured, technically-refined project tickets. Analyzes input to identify all tickets needed, determines proper ordering based on dependencies, then for each ticket: **writes the ticket markdown to a temporary file** for the user to review and edit in their IDE, then creates the ticket in JIRA (or copies to clipboard) and deletes the temp file. JIRA creation uses the **`write-tickets-publish-to-jira` skill** inline via `acli` (mobile defaults: RETIRE, component Consumer, sprint Mobile Refinement). Falls back to clipboard copy if creation fails.
 
 ## Process
 
@@ -210,9 +210,9 @@ Do NOT proceed to writing tickets until the plan is approved.
 
 The workflow differs based on output mode:
 
-#### JIRA Subagent Mode
+#### JIRA Mode
 
-**ALWAYS use the jira-expert subagent** to create tickets in JIRA. Generate document (via technical-writer), write to temp file, get approval, read file back, create, and delete the temp file — for each ticket before moving to the next.
+**Use the `write-tickets-publish-to-jira` skill** to create tickets in JIRA. This runs inline (not as a subagent) so you retain full context. Generate document (via technical-writer), write to temp file, get approval, read file back, publish via the skill, and delete the temp file — for each ticket before moving to the next.
 
 1. Maintain a mapping of placeholder → JIRA key (e.g., "Ticket #1" → "RETIRE-1115"). **When displaying or confirming a ticket number, always use a link:** `[KEY](https://gustohq.atlassian.net/browse/KEY)` (e.g. [RETIRE-1115](https://gustohq.atlassian.net/browse/RETIRE-1115)).
 
@@ -239,36 +239,15 @@ The workflow differs based on output mode:
      ```
 
    - If "feedback" selected: gather feedback conversationally, update the temp file, and ask again
-   - When approved: **Read the temp file back** (the user may have edited it), then use the **jira-expert subagent** via the Task tool:
+   - When approved: **Read the temp file back** (the user may have edited it), then **read and follow the `write-tickets-publish-to-jira` skill** to create the ticket. Pass it:
+     - **Title:** the ticket title
+     - **Issue type:** Story, Bug, Task, or Improvement
+     - **Project/Component/Sprint:** from defaults or user input
+     - **Markdown content:** the temp file contents you just read back
 
-     ```
-     Task({
-       "subagent_type": "jira-expert",
-       "description": "Create JIRA ticket",
-       "prompt": "Create a new JIRA ticket with the following details:\n\n**Title:** [ticket title]\n**Issue Type:** [Story/Bug/Task]\n**Project:** RETIRE\n**Component:** Consumer\n**Sprint:** Mobile Refinement\n\n**Description (in Markdown format):**\n\n[full ticket markdown read from temp file]\n\nPlease create this ticket and return the JIRA key (e.g., RETIRE-XXXX) with a link to the ticket."
-     })
-     ```
+   - If creation **succeeds**: Extract the JIRA key, add it to the mapping, **delete the temp file** using the Delete tool, and confirm: "Created [RETIRE-1115](https://gustohq.atlassian.net/browse/RETIRE-1115) (Ticket N of M)"
 
-   - If the subagent **succeeds**: Extract the JIRA key from the response, add it to the mapping, **delete the temp file** using the Delete tool, and confirm: "Created [RETIRE-1115](https://gustohq.atlassian.net/browse/RETIRE-1115) (Ticket N of M)"
-   
-   - If the subagent **fails**: Offer fallback using AskQuestion:
-
-     ```
-     AskQuestion({
-       "title": "Ticket Creation Failed",
-       "questions": [{
-         "id": "fallback",
-         "prompt": "Failed to create ticket in JIRA. Would you like me to copy the markdown to your clipboard so you can paste it manually?",
-         "options": [
-           {"id": "copy", "label": "Yes, copy to clipboard"},
-           {"id": "skip", "label": "No, skip this ticket"},
-           {"id": "retry", "label": "Retry with subagent"}
-         ]
-       }]
-     })
-     ```
-
-     If "copy" selected: Use pbcopy to copy the temp file contents, **delete the temp file**, then confirm and continue to next ticket.
+   - If creation **fails**: The publish skill handles fallback (copy to clipboard or retry). If clipboard copy is used, **delete the temp file** afterward.
 
 3. After all tickets: Confirm "All [N] tickets created!" with each key as a link (e.g. [RETIRE-1115](https://gustohq.atlassian.net/browse/RETIRE-1115)). Verify all temp files have been deleted.
 
@@ -364,7 +343,7 @@ Always use Markdown (technical-writer produces Markdown). It works for both JIRA
 | Displaying ticket markdown in chat instead of a file  | Always write to `/tmp/ticket-N-slug.md` — user reviews/edits in IDE, not in chat           |
 | Not reading temp file back before creating            | User may have edited the file — always Read it back before JIRA creation or pbcopy         |
 | Not deleting temp files after creation                | Delete each temp file after the ticket is created or copied to clipboard                   |
-| Forgetting to pbcopy                                  | Copy each ticket to clipboard as it's approved (manual mode or subagent fallback)          |
-| Not using jira-expert subagent                        | ALWAYS use the jira-expert subagent for JIRA ticket creation                               |
-| Not offering fallback when subagent fails             | If subagent fails, offer to copy markdown to clipboard via AskQuestion                     |
+| Forgetting to pbcopy                                  | Copy each ticket to clipboard as it's approved (manual mode or creation fallback)          |
+| Using jira-expert subagent instead of publish skill   | Use `write-tickets-publish-to-jira` skill inline — no subagents for JIRA creation          |
+| Not offering fallback when creation fails             | If acli fails, offer to copy markdown to clipboard via AskQuestion                         |
 | Writing ticket content without technical-writer       | Use the technical-writer skill to generate each ticket document; then create the ticket    |
