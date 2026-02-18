@@ -65,34 +65,34 @@ Each sub-skill runs with its full interactive prompts. The user confirms at ever
 
 ## Step 1: Initialize
 
-Read and follow `~/.cursor/skills/dev-workflow-initialize/SKILL.md`.
+Use the `dev-workflow-initialize` skill to create the branch and worktree.
 
 - **Autopilot**: Use the ticket number collected in Step 0. Skip the "Which Ticket?" prompt. Auto-generate branch name. Skip "Open in Cursor?" (use collected answer). Skip "Start Implementation?" (always yes).
 - **Pair**: All prompts go to the user as normal.
 
 ## Step 2: Start Work
 
-Read and follow `~/.cursor/skills/dev-workflow-start-work/SKILL.md`.
+Use the `dev-workflow-start-work` skill to implement the ticket.
 
-- **Autopilot**: Present the implementation plan for review (always show the plan -- this is the one pause in autopilot). After user confirms, use atomic commit strategy automatically. Skip the commit strategy prompt. During implementation, run `dev-workflow-prepare-commit` after each logical unit with all defaults (stage all, auto-fix minor issues, auto-fix lint, auto-generate message, auto-push).
+- **Autopilot**: Present the implementation plan for review (always show the plan -- this is the one pause in autopilot). After user confirms, use atomic commit strategy automatically. Skip the commit strategy prompt. During implementation, use the `dev-workflow-prepare-commit` skill after each logical unit with all defaults (stage all, auto-fix minor issues, auto-fix lint, auto-generate message, auto-push).
 - **Pair**: All prompts go to the user as normal (plan confirmation, commit strategy, per-commit decisions).
 
 ## Step 2.5: Final Commit (single-commit strategy only, pair mode)
 
-Only applies in pair mode when the user chose "single commit at end". Read and follow `~/.cursor/skills/dev-workflow-prepare-commit/SKILL.md`. Auto-push when done.
+Only applies in pair mode when the user chose "single commit at end". Use the `dev-workflow-prepare-commit` skill to review, lint, test, and commit. Auto-push when done.
 
 This step never runs in autopilot (autopilot always uses atomic commits).
 
 ## Step 3: Create PR
 
-Read and follow `~/.cursor/skills/dev-workflow-create-pr/SKILL.md`.
+Use the `dev-workflow-create-pr` skill to push and open the pull request.
 
 - **Autopilot**: Push if needed. Generate PR description and create the PR. Skip "Start PR Review?" (always yes). Proceed directly to Step 4.
 - **Pair**: All prompts go to the user as normal.
 
 ## Step 4: Review PR
 
-Read and follow `~/.cursor/skills/dev-workflow-review-pr/SKILL.md`.
+Use the `dev-workflow-review-pr` skill to review the pull request.
 
 - **Autopilot**: Review the current branch's PR automatically. Skip the "Which PR?" prompt.
 - **Pair**: All prompts go to the user as normal.

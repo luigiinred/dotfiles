@@ -88,7 +88,7 @@ git diff main...HEAD --stat
 
 **Delegate to the `write-pr-description` skill** to generate the PR description.
 
-Read and follow the skill at: `/Users/timmy.garrabrant/.cursor/skills/write-pr-description/SKILL.md`
+Use the `write-pr-description` skill to generate the PR description.
 
 The skill will:
 
@@ -155,7 +155,7 @@ After reporting the clickable PR URL, **ALWAYS use the AskQuestion tool:**
 
 Based on the response:
 
-- "review" → Read and follow the `dev-workflow-review-pr` skill at /Users/timmy.garrabrant/.cursor/skills/dev-workflow-review-pr/SKILL.md to perform a comprehensive code review
+- "review" → Use the `dev-workflow-review-pr` skill to perform a comprehensive code review
 - "done" → End the workflow
 
 ## Checklist
