@@ -1,5 +1,5 @@
 ---
-name: execute-ticket
+name: dev-workflow-execute-ticket
 description: Start or resume work on a Jira ticket by extracting ticket ID from branch name, fetching requirements via Jira MCP, creating an implementation plan, and executing it. Use when the user wants to start ticket work, resume a ticket, implement Jira requirements, begin coding on a branch, or mentions "start the ticket" or "execute the ticket".
 ---
 
@@ -158,12 +158,12 @@ For users who chose **atomic commits**:
 1. **Mark first todo as in_progress**
 2. **Read relevant files** to understand current state
 3. **Make changes** for a single logical unit of work
-4. **Commit immediately** using the `prepare-commit` skill
+4. **Commit immediately** using the `dev-workflow-prepare-commit` skill
 5. **Move to next todo** and repeat
 
 **CRITICAL**: Work in atomic commits. Each commit should represent a single, focused change.
 
-After completing each logical step or todo, use the `prepare-commit` skill to:
+After completing each logical step or todo, use the `dev-workflow-prepare-commit` skill to:
 
 - Review your changes
 - Run linter and tests
@@ -183,7 +183,7 @@ For users who chose **single commit at end**:
 5. **Continue** until all work is complete
 6. **Inform user** when ready for review and commit
 
-**Do NOT use prepare-commit skill** or create any commits during implementation.
+**Do NOT use dev-workflow-prepare-commit skill** or create any commits during implementation.
 
 Once all work is complete, inform the user:
 "All implementation is complete. Changes are ready for your review and commit."
@@ -197,7 +197,7 @@ For users who chose **ask before each commit**:
 3. **Make changes** for a logical unit of work
 4. **When reaching a commit point**, describe what you've done and ask:
    "I've completed [description of changes]. Would you like me to commit these changes now?"
-5. **If yes**: Use the `prepare-commit` skill
+5. **If yes**: Use the `dev-workflow-prepare-commit` skill
 6. **If no**: Continue to next todo
 7. **Repeat** until all work is complete
 
@@ -241,7 +241,7 @@ Create a commit after completing:
 
 After completing each logical unit of work:
 
-1. **Use the prepare-commit skill**: "Prepare commit"
+1. **Use the dev-workflow-prepare-commit skill**: "Prepare commit"
    - Reviews your changes
    - Runs linter checks
    - Runs relevant tests
@@ -282,13 +282,13 @@ Options:
 1. "I'm working on a specific ticket" → Prompt for ticket ID
 2. "This is unticketed work (use RETIRE-1908)" → Use placeholder ticket
 3. "Let me check out a different branch" → List recent branches
-4. "I want to create a new branch for a ticket" → Use start-ticket skill
+4. "I want to create a new branch for a ticket" → Use dev-workflow-start-ticket skill
 ```
 
 **If user provides ticket ID**: Proceed with that ticket (Step 2)
 **If unticketed work**: Use RETIRE-1908 as placeholder, create plan based on user description
 **If switching branches**: Help them switch, then re-run workflow
-**If creating new branch**: Delegate to the `start-ticket` skill
+**If creating new branch**: Delegate to the `dev-workflow-start-ticket` skill
 
 ## Edge Cases
 
@@ -335,7 +335,7 @@ If the ticket is very large:
 4. **Follow project conventions** - check similar implementations
 5. **Implement tests** for new functionality
 6. **Update documentation** if needed
-7. **Verify linter passes** when using prepare-commit skill
+7. **Verify linter passes** when using dev-workflow-prepare-commit skill
 8. **Check acceptance criteria** before marking complete
 9. **Ask questions** if requirements are ambiguous
 10. **Keep todos updated** regardless of commit strategy
@@ -344,10 +344,10 @@ If the ticket is very large:
 
 This skill works well with:
 
-- **start-ticket**: For creating new branches with tickets
-- **prepare-commit**: Used when atomic or manual commit strategy is chosen
+- **dev-workflow-start-ticket**: For creating new branches with tickets
+- **dev-workflow-prepare-commit**: Used when atomic or manual commit strategy is chosen
 - **push-changes**: For pushing commits when work is complete
-- **create-pr**: For opening pull requests after pushing
+- **dev-workflow-create-pr**: For opening pull requests after pushing
 - **fix-all-tests**: If tests need updating during implementation
 
 ## Example Usage
@@ -370,11 +370,11 @@ This skill works well with:
 9. **User selects**: "Break work into atomic commits" (atomic)
 10. Begins implementation
 11. **Completes first todo**: Configure resources
-12. **Uses prepare-commit skill**: Creates commit "feat(android): add splash screen resources"
+12. **Uses dev-workflow-prepare-commit skill**: Creates commit "feat(android): add splash screen resources"
 13. **Completes second todo**: Update manifest
-14. **Uses prepare-commit skill**: Creates commit "feat(android): configure splash screen in manifest"
+14. **Uses dev-workflow-prepare-commit skill**: Creates commit "feat(android): configure splash screen in manifest"
 15. **Completes third todo**: Add tests
-16. **Uses prepare-commit skill**: Creates commit "test(android): add splash screen tests"
+16. **Uses dev-workflow-prepare-commit skill**: Creates commit "test(android): add splash screen tests"
 17. Verifies acceptance criteria and marks ticket complete
 
 ## Troubleshooting

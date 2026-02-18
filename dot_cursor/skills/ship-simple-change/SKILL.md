@@ -10,7 +10,7 @@ Automate the full flow: stage specified files → lint → test → commit → p
 ## When to Use
 
 - User says "push this and create a PR", "ship this change", "commit, push, and open a PR uninterrupted"
-- User wants to use the same flow as prepare-commit + create-pr but in one shot with no confirmations
+- User wants to use the same flow as dev-workflow-prepare-commit + dev-workflow-create-pr but in one shot with no confirmations
 
 ## Phase 1: Collect Information Up Front
 
@@ -160,9 +160,9 @@ Do not offer "proceed anyway" for critical issues or failing tests. Only stop an
 
 This skill is the **uninterrupted** variant of the same flow. For interactive steps (confirm message, confirm push, confirm PR), use instead:
 
-- **prepare-commit** — commit with confirmations at each step
-- **create-pr** — create PR after push, with option to review
-- **start-ticket** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
+- **dev-workflow-prepare-commit** — commit with confirmations at each step
+- **dev-workflow-create-pr** — create PR after push, with option to review
+- **dev-workflow-start-ticket** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
 
 ## Checklist (for the agent)
 

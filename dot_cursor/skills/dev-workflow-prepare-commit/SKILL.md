@@ -1,5 +1,5 @@
 ---
-name: prepare-commit
+name: dev-workflow-prepare-commit
 description: Prepare code for commit with quality checks and conventional commit message generation. Use when the user asks to prepare a commit, review changes before committing, or wants a thorough pre-commit check including lint, tests, and code review.
 ---
 

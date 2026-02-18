@@ -1,5 +1,5 @@
 ---
-name: start-ticket
+name: dev-workflow-start-ticket
 description: Start working on a Jira ticket by fetching details and creating a git branch in a new worktree. Use when the user wants to start a ticket, begin work on a Jira issue, or create a branch for a ticket. For unticketed work, use placeholder RETIRE-1908.
 ---
 

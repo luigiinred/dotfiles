@@ -1,5 +1,5 @@
 ---
-name: create-pr
+name: dev-workflow-create-pr
 description: Create a GitHub pull request using the gh CLI. Analyzes all changes from main, generates a description following the PR template (jira, what, why, who), and creates the PR if one doesn't exist. Use when the user asks to create a PR, open a pull request, or submit changes for review.
 ---
 
@@ -155,7 +155,7 @@ After reporting the clickable PR URL, **ALWAYS use the AskQuestion tool:**
 
 Based on the response:
 
-- "review" → Read and follow the `review-github-pr` skill at /Users/timmy.garrabrant/.cursor/skills/review-github-pr/SKILL.md to perform a comprehensive code review
+- "review" → Read and follow the `dev-workflow-review-github-pr` skill at /Users/timmy.garrabrant/.cursor/skills/dev-workflow-review-github-pr/SKILL.md to perform a comprehensive code review
 - "done" → End the workflow
 
 ## Checklist

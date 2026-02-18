@@ -440,7 +440,7 @@ Options:
 
 ## Examples from Real Skills
 
-### From prepare-commit
+### From dev-workflow-prepare-commit
 
 ```json
 AskQuestion({
@@ -457,7 +457,7 @@ AskQuestion({
 })
 ```
 
-### From start-ticket
+### From dev-workflow-start-ticket
 
 ```json
 AskQuestion({
