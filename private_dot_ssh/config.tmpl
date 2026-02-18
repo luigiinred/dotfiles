@@ -1,0 +1,21 @@
+{{ if stat (joinPath .chezmoi.homeDir ".colima/ssh_config") -}}
+Include {{ .chezmoi.homeDir }}/.colima/ssh_config
+{{ end -}}
+Host *
+    AddKeysToAgent yes
+    UseKeychain yes
+    IdentityFile ~/.ssh/id_ed25519
+
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+    AddKeysToAgent yes
+    UseKeychain yes
+
+Host github-secondary
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_github_secondary
+    AddKeysToAgent yes
+    UseKeychain yes
