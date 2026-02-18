@@ -1,6 +1,6 @@
 ---
 name: technical-writer
-description: Document generator that produces polished markdown for any technical document - tickets, PR descriptions, spikes, plans, reports, architecture decisions, RFCs, and proposals. Use directly when the user asks to write, draft, or summarize a document or plan, or as the writing engine called by other skills (e.g. write-tickets for ticket markdown, write-pr-description for PR body content).
+description: Document generator that produces polished markdown for any technical document - tickets, PR descriptions, spikes, plans, reports, architecture decisions, RFCs, and proposals. Use directly when the user asks to write, draft, or summarize a document or plan, or as the writing engine called by other skills (e.g. write-tickets for ticket markdown, dev-workflow-create-pr for PR body content).
 ---
 
 # Technical Writer
@@ -125,7 +125,7 @@ Used when writing JIRA tickets or standalone ticket descriptions.
 
 ### PR Description
 
-Used when writing pull request descriptions (jira/what/why/who format). Can be called by `write-pr-description` (which supplies diff + ticket and may wrap output in `[[[` / `]]]`) or directly.
+Used when writing pull request descriptions (jira/what/why/who format). Can be called by `dev-workflow-create-pr` (which supplies diff + ticket and may wrap output in `[[[` / `]]]`) or directly.
 
 **PR description rules:**
 - Output only the **jira** / **what** / **why** / **who** block; no extra headers or preamble.
