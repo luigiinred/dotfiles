@@ -1,22 +1,3 @@
 # Mobile Jira Fields
 
-Use these defaults when creating tickets for the mobile-app codebase.
-
-## Project
-
-| Field | Value |
-|-------|-------|
-| Project Key | RETIRE |
-
-## Required Fields
-
-| Field | Value | Jira ID |
-|-------|-------|---------|
-| Component | Consumer | `17013` |
-| Sprint | Mobile Refinement | `17210` (customfield_10020) |
-
-## Notes
-
-- Do NOT ask the user for project/component when working in mobile-app - use these defaults automatically
-- Sprint field uses `customfield_10020` in the Jira API
-- Component is set via the `components` array field with the component ID
+**Use the project config instead:** See **`projects/mobile-app.md`** in this skill for JIRA fields (project, component, sprint) for the guideline-app/mobile-app repo. The publish step uses `projects/` to resolve config by current repo; when you're in that repo, it uses `projects/mobile-app.md` automatically.
