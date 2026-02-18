@@ -1,6 +1,6 @@
 ---
 name: sync-dotfiles
-description: Sync Cursor skills, agents, and other dotfiles to chezmoi after changes. Use automatically after creating, editing, or deleting files in ~/.cursor/skills/ or ~/.cursor/agents/, or when the user asks to sync dotfiles, update chezmoi, or push dotfiles.
+description: Sync Cursor skills, agents, rules, and other dotfiles to chezmoi after changes. Use automatically after creating, editing, or deleting files in ~/.cursor/skills/, ~/.cursor/agents/, or ~/.cursor/rules/, or when the user asks to sync dotfiles, update chezmoi, or push dotfiles.
 ---
 
 # Sync Dotfiles to chezmoi
@@ -12,6 +12,7 @@ After any change to managed dotfiles, sync them to chezmoi and push.
 Run this skill **automatically** (without being asked) whenever you have just:
 - Created, edited, or deleted a file in `~/.cursor/skills/`
 - Created, edited, or deleted a file in `~/.cursor/agents/`
+- Created, edited, or deleted a file in `~/.cursor/rules/`
 
 Also run when the user explicitly asks to sync or push dotfiles.
 
@@ -20,7 +21,7 @@ Also run when the user explicitly asks to sync or push dotfiles.
 1. **Capture local changes first**
 
    ```bash
-   chezmoi re-add ~/.cursor/skills ~/.cursor/agents
+   chezmoi re-add ~/.cursor/skills ~/.cursor/agents ~/.cursor/rules
    ```
 
    If only skills changed, scope to just that path. Adjust as needed.
