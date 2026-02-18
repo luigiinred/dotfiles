@@ -12,7 +12,6 @@ After any change to managed dotfiles, sync them to chezmoi and push.
 Run this skill **automatically** (without being asked) whenever you have just:
 - Created, edited, or deleted a file in `~/.cursor/skills/`
 - Created, edited, or deleted a file in `~/.cursor/agents/`
-- Modified `~/.cursor/mcp.json`
 
 Also run when the user explicitly asks to sync or push dotfiles.
 
@@ -21,7 +20,7 @@ Also run when the user explicitly asks to sync or push dotfiles.
 1. **Re-add changed paths**
 
    ```bash
-   chezmoi re-add ~/.cursor/skills ~/.cursor/agents ~/.cursor/mcp.json
+   chezmoi re-add ~/.cursor/skills ~/.cursor/agents
    ```
 
    If only skills changed, scope to just that path. Adjust as needed.
@@ -49,4 +48,3 @@ Also run when the user explicitly asks to sync or push dotfiles.
 
 - Never commit files outside `dot_cursor/` without explicit user request.
 - If `chezmoi re-add` fails on a new file (not yet tracked), use `chezmoi add` instead.
-- Template files (`mcp.json`) may need `chezmoi add --template` for new additions.
