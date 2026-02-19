@@ -64,15 +64,25 @@ Do this BEFORE identifying tickets. Research often simplifies scope.
 
 **Critical rule:** No assumptions. Only include findings VERIFIED to exist. Use GitHub links to specific files and line numbers, using the current project's repository URL (e.g. from `git remote get-url origin` or the workspace).
 
-## Output for Step 2
+## Output
 
-When gathering is complete, you have:
+When gathering is complete, write everything to **`/tmp/write-tickets-research.md`** using this format:
 
-- **Requirements:** What the user provided (description, meeting notes, etc.).
-- **Research findings (if any):** Codebase and/or online research results.
-- **Preserved source links:** URLs from user input for ticket Additional Context.
+```markdown
+## Requirements
 
-Proceed to **Step 2: Write** — read and follow `steps/write.md`. The write step will identify tickets from this data and get plan approval before writing.
+<the user's requirements — paste what they provided>
+
+## Research Findings
+
+<codebase and/or online research results, or "None">
+
+## Source Links
+
+<preserved URLs from user input, or "None">
+```
+
+This file is the handoff to Step 2 (Write). The write subagent reads it to identify tickets.
 
 ## Common Mistakes
 

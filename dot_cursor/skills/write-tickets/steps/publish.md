@@ -4,9 +4,7 @@ Take the list of finalized ticket markdown from Step 2 (write) and create each i
 
 ## Prerequisites
 
-You need from Step 2 (write):
-
-- **List of finalized tickets:** For each, { title, type, tempFilePath }. The markdown content lives in the temp files from Step 2 (e.g. `/tmp/ticket-1-slug.md`). Read each temp file when you need its content — do NOT require the content to be passed in memory.
+Read **`/tmp/write-tickets-manifest.json`** — this is the handoff file from Step 2 (Write). It contains an array of finalized tickets, each with `number`, `title`, `type`, and `tempFile` (path to the ticket markdown). Read each temp file when you need its content — do NOT require the content to be passed in memory.
 
 ## Workflow
 
@@ -135,7 +133,10 @@ Keep a mapping: placeholder → JIRA key (e.g. "Ticket #1" → "RETIRE-1115"). U
 
 ### After All Tickets
 
-1. **Clean up all temp files:** Delete all `/tmp/ticket-N-*.md` temp files from Step 2. These are no longer needed now that the tickets are created in JIRA.
+1. **Clean up all temp files:** Delete these files — they are no longer needed:
+   - `/tmp/write-tickets-research.md` (Step 1 handoff)
+   - `/tmp/write-tickets-manifest.json` (Step 2 handoff)
+   - All `/tmp/ticket-N-*.md` files (ticket markdown from Step 2)
 2. "All [N] tickets created!" with each key as a link.
 
 ## Why This Order?

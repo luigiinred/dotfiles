@@ -7,32 +7,92 @@ description: Use when creating Jira tickets, writing project tickets, user stori
 
 ## Overview
 
-Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets. The workflow has three steps; each step is defined in this skill's **`steps/`** directory. Read and follow the step file for each phase.
-
-1. **Step 1: Research** — Gather requirements and optional research (codebase/online). Data only; no ticket list yet. → **`steps/research.md`**
-2. **Step 2: Write** — Identify tickets from the data, confirm plan, then generate each ticket document (technical-writer + temp file for review), collect approved markdown. → **`steps/write.md`**
-3. **Step 3: Publish** — Create tickets in JIRA in order (acli, ADF, component/sprint). Temp markdown files for review; no clipboard. → **`steps/publish.md`**
-
-Run all three in sequence for the full flow, or start at a later step when the user is partway through.
+Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets. The workflow runs three steps in sequence, each in its own **subagent**. Data is passed between steps via temp files.
 
 ## Pipeline
 
 ```
-steps/research.md     (gather requirements, optional research — data only)
+[Subagent 1: Research]  →  /tmp/write-tickets-research.md
         ↓
-steps/write.md        (identify tickets, confirm plan, then technical-writer → temp file → approve → read back)
+[Subagent 2: Write]     →  /tmp/ticket-N-*.md + /tmp/write-tickets-manifest.json
         ↓
-steps/publish.md      (create in JIRA, in order — acli, ADF, component/sprint)
+[Subagent 3: Publish]   →  JIRA tickets created, temp files cleaned up
 ```
 
 ## How to Run
 
-- **Full flow:** Read and follow `steps/research.md`, then `steps/write.md`, then `steps/publish.md` in order.
-- **Step 1 (Research):** Read and follow `steps/research.md`. When gathering is complete (requirements + optional research), proceed to Step 2.
-- **Step 2 (Write):** You need gathered data from Step 1. Read and follow `steps/write.md` (it will identify tickets, confirm plan, then write each). When all tickets are finalized, proceed to Step 3.
-- **Step 3 (Publish):** You need the list of finalized tickets. Read and follow `steps/publish.md` (it resolves JIRA config at the start, then creates each ticket with acli/ADF).
+Launch each step as a **subagent** in sequence. Each subagent reads its step file and follows it. Pass the handoff file paths in the subagent prompt so it knows where to read/write.
 
-**Skipping steps:** If the user already has gathered data or an approved plan → start at `steps/write.md`. If they already have finalized ticket markdown → start at `steps/publish.md`.
+**Skipping steps:** If the user already has gathered data → start at Step 2. If they already have finalized ticket markdown in temp files → start at Step 3.
+
+### Step 1: Research
+
+Launch a subagent with this prompt:
+
+```
+Read and follow the skill step file at: <absolute-path-to>/steps/research.md
+
+When research is complete, write the gathered data to /tmp/write-tickets-research.md
+using this format:
+
+  ## Requirements
+  <the user's requirements>
+
+  ## Research Findings
+  <codebase and/or online research results, or "None">
+
+  ## Source Links
+  <preserved URLs from user input, or "None">
+
+Return a summary of what was gathered.
+```
+
+When the subagent returns, proceed to Step 2.
+
+### Step 2: Write
+
+Launch a subagent with this prompt:
+
+```
+Read and follow the skill step file at: <absolute-path-to>/steps/write.md
+
+Read the gathered data from /tmp/write-tickets-research.md — this contains
+the requirements, research findings, and source links from Step 1.
+
+The ticket templates are at: <absolute-path-to>/templates/
+
+After all tickets are finalized, write a manifest to /tmp/write-tickets-manifest.json:
+{
+  "tickets": [
+    {"number": 1, "title": "...", "type": "Story|Bug|Task", "tempFile": "/tmp/ticket-1-slug.md"},
+    ...
+  ]
+}
+
+Return the ticket plan summary and manifest path.
+```
+
+When the subagent returns, proceed to Step 3.
+
+### Step 3: Publish
+
+Launch a subagent with this prompt:
+
+```
+Read and follow the skill step file at: <absolute-path-to>/steps/publish.md
+
+Read the ticket manifest from /tmp/write-tickets-manifest.json to get the list
+of finalized tickets and their temp file paths.
+
+The jira-settings template is at: <absolute-path-to>/templates/jira-settings.md
+
+After all tickets are created, clean up all temp files:
+- /tmp/write-tickets-research.md
+- /tmp/write-tickets-manifest.json
+- All /tmp/ticket-N-*.md files
+
+Return the list of created JIRA ticket keys with links.
+```
 
 ## Shared Conventions
 
@@ -42,10 +102,20 @@ steps/publish.md      (create in JIRA, in order — acli, ADF, component/sprint)
 - **Links:** When showing a ticket key, always use a link: `[RETIRE-1234](https://gustohq.atlassian.net/browse/RETIRE-1234)`.
 - **No local file paths in ticket content.** Use GitHub links only, using the current project's repository URL (e.g. from `git remote get-url origin` or the workspace context).
 
+## Handoff Files
+
+| File | Written by | Read by | Contents |
+|------|-----------|---------|----------|
+| `/tmp/write-tickets-research.md` | Step 1 | Step 2 | Requirements, research findings, source links |
+| `/tmp/ticket-N-*.md` | Step 2 | Step 3 | Individual ticket markdown |
+| `/tmp/write-tickets-manifest.json` | Step 2 | Step 3 | Ticket list with titles, types, and temp file paths |
+
+All temp files are cleaned up by Step 3 after JIRA tickets are created.
+
 ## Steps Reference
 
-| Step | File | Purpose |
-|------|------|--------|
-| 1 | `steps/research.md` | Gather requirements and optional research (data only) |
-| 2 | `steps/write.md` | Identify tickets, confirm plan, then generate ticket markdown (technical-writer + temp file), collect approved content |
-| 3 | `steps/publish.md` | Create in JIRA in order (acli, ADF); fallback = temp file for manual paste |
+| Step | File | Subagent Purpose |
+|------|------|-----------------|
+| 1 | `steps/research.md` | Gather requirements and optional research → write to handoff file |
+| 2 | `steps/write.md` | Identify tickets, confirm plan, generate ticket markdown → write manifest |
+| 3 | `steps/publish.md` | Create in JIRA in order, clean up all temp files |

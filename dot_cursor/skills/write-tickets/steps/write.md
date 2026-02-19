@@ -4,7 +4,7 @@ Identify tickets from the gathered data, get plan approval, then generate ticket
 
 ## Prerequisites
 
-You need **gathered data** from Step 1 (research):
+Read **`/tmp/write-tickets-research.md`** — this is the handoff file from Step 1 (Research). It contains:
 
 - Requirements (what the user provided)
 - Research findings (if any)
@@ -96,7 +96,18 @@ Do NOT proceed to writing ticket content until the plan is approved.
 
 ### After All Tickets
 
-You have a list of **finalized tickets:** { title, type, tempFilePath } for each. The markdown lives in the temp files. Proceed to **Step 3: Publish** — read and follow `steps/publish.md`. The publish step reads markdown from the temp files, creates tickets, and cleans up all temp files at the end.
+Write a manifest to **`/tmp/write-tickets-manifest.json`** listing all finalized tickets:
+
+```json
+{
+  "tickets": [
+    {"number": 1, "title": "Add migration for new columns", "type": "Story", "tempFile": "/tmp/ticket-1-add-migration.md"},
+    {"number": 2, "title": "Add API endpoint", "type": "Story", "tempFile": "/tmp/ticket-2-add-api-endpoint.md"}
+  ]
+}
+```
+
+This manifest is the handoff to Step 3 (Publish). The publish subagent reads it to know which tickets to create and where to find the markdown.
 
 ## Templates (this skill)
 
