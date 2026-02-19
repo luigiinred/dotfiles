@@ -60,14 +60,7 @@ Does this breakdown and order look right?
 
 Do NOT proceed to writing ticket content until the plan is approved.
 
-### 3. Issue Type Mapping (for Step 3 publish)
-
-- Feature/Story → "Story" (or "Improvement")
-- Bug → "Bug"
-- Tech Debt → "Task" or "Improvement"
-- Spike → "Task" or "Story"
-
-### 4. For Each Ticket in the Approved Plan
+### 3. For Each Ticket in the Approved Plan
 
 1. **Generate the ticket document** from this ticket's type and the gathered data:
    - **Template:** Read this skill's `templates/` and use the right one: `feature-template.md` (Story), `bug-template.md` (Bug), `tech-debt-template.md` (Tech Debt), `spike-template.md` (Spike).

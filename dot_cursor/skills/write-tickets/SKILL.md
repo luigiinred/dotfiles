@@ -5,8 +5,6 @@ description: Use when creating Jira tickets, writing project tickets, user stori
 
 # Write Tickets
 
-**Use this skill for creating Jira tickets.** Do not use other "create ticket" or "create Jira" skills — write-tickets is the canonical workflow.
-
 ## Overview
 
 Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets. The workflow has three steps; each step is defined in this skill's **`steps/`** directory. Read and follow the step file for each phase.
@@ -38,7 +36,7 @@ steps/publish.md      (create in JIRA, in order — acli, ADF, component/sprint)
 
 ## Shared Conventions
 
-- **Project configs:** This skill's **`projects/`** directory holds one `.md` file per project (e.g. `projects/mobile-app.md` for https://github.com/guideline-app/mobile-app). If the current workspace repo matches a project, use that project's config automatically. If not, ask the user: "Should I use a project config?" and list available projects or let them specify project/component/sprint. See `projects/README.md`.
+- **JIRA settings:** The publish step resolves JIRA fields (project key, component, sprint, base URL, issue type mapping) from a `.jira-settings.md` file. Lookup order: **project root first** (`<workspace>/.jira-settings.md`), then **user home** (`~/.jira-settings.md`). If neither exists, the user is prompted to create one or specify fields manually. See `steps/publish.md` for the full resolution logic and file template.
 - **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`. The write step is the expert for JIRA ticket content.
 - **JIRA creation** is done in **`steps/publish.md`** (acli, markdown→ADF, workitem create, component/sprint). Never use a separate jira-expert subagent for creation.
 - **Links:** When showing a ticket key, always use a link: `[RETIRE-1234](https://gustohq.atlassian.net/browse/RETIRE-1234)`.

@@ -14,19 +14,35 @@ You need from Step 2 (write):
 
 Do this first, before creating any tickets.
 
-**Resolve project config:**
+**Resolve `.jira-settings.md`:**
 
-- **Current repo:** Determine the current repository (e.g. run `git remote get-url origin` or use workspace context). Normalize to an identifier like `guideline-app/mobile-app` (owner/repo).
-- **Match a project:** This skill has a **`projects/`** directory. Each `.md` file (e.g. `projects/mobile-app.md`) is a project keyed by repo. Check if the current repo matches the **repo** in a project file. Example: repo contains `guideline-app/mobile-app` → use **`projects/mobile-app.md`**.
-- **If matched:** Read that project file (e.g. `projects/mobile-app.md`) for JIRA fields to set (project key, component, sprint, JIRA base URL). Use those values. Do NOT ask the user for project/component/sprint.
-- **If not matched:** Ask the user whether to use a project config:
-  - Use AskQuestion: "Should I use a project config for JIRA fields?"
-  - Options: list each project in `projects/` (e.g. "mobile-app — for https://github.com/guideline-app/mobile-app") plus "No — I'll specify project/component/sprint myself".
-  - If they pick a project: read that project's .md file (e.g. `projects/mobile-app.md`) and use its fields.
-  - If they pick "No": use AskQuestion or MCP to get project/component/sprint (or "Show me available options").
+1. **Check project root:** Read `<workspace-root>/.jira-settings.md`. If it exists, use it.
+2. **Check user home:** If not found, read `~/.jira-settings.md`. If it exists, use it.
+3. **If neither exists:** Use AskQuestion to prompt the user:
+
+   ```
+   AskQuestion({
+     "title": "No .jira-settings.md found",
+     "questions": [{
+       "id": "jira_settings",
+       "prompt": "No .jira-settings.md found in this project or your home directory. How should I get JIRA config?",
+       "options": [
+         {"id": "create_project", "label": "Create .jira-settings.md in this project"},
+         {"id": "create_home", "label": "Create ~/.jira-settings.md in my home directory"},
+         {"id": "manual", "label": "Specify manually (don't save)"}
+       ]
+     }]
+   })
+   ```
+
+   - **"Create in project" or "Create in home":** Ask the user for the required fields (project key, component, sprint, JIRA base URL, issue type mapping). Read this skill's `templates/jira-settings.md` for the default template, fill in the user's values, and write to the chosen location. Then use it.
+   - **"Specify manually":** Ask for project key, component, sprint, and JIRA base URL inline. Do not save to disk.
+
+**After resolving settings:**
+
 - **Prefer Jira MCP:** If a Jira/Atlassian MCP server is configured, use it for creation. Call `getAccessibleAtlassianResources` (or equivalent) to get `cloudId`. Use project/component/sprint from the resolved config. The MCP allows setting **component** and **current sprint** (and other fields) on create via additional_fields.
 - **Fallback: acli.** If MCP is not available or you need a fallback, run `acli jira auth status`. If not authenticated, tell the user to run `acli jira auth login --web` and complete the browser flow; stop until auth succeeds.
-- **JIRA base URL** for links: From the project's README or user input. When displaying a ticket key, always use a link: `[KEY](<jira-base-url>/browse/KEY)`.
+- **JIRA base URL** for links: From the settings file or user input. When displaying a ticket key, always use a link: `[KEY](<jira-base-url>/browse/KEY)`.
 
 ### 2. Maintain a Key Mapping
 
