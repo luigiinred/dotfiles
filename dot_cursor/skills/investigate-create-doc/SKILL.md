@@ -81,18 +81,48 @@ Get confirmation before investigating.
 
 ---
 
-## Phase 4 — Investigate Each Area
+## Phase 4 — Investigate Each Area (Parallel Subagents)
 
-For each area, use explore/search subagents to **answer the defined questions**:
+**Launch one subagent per area** using the Task tool. Run up to 4 in parallel; queue the rest.
 
-- **Definitions**: where the code lives, what it exports
-- **Dependencies**: what it imports/calls/depends on
-- **Consumers**: what uses it (grep for imports, exclude test files)
-- **Data flow**: inputs → transformations → outputs
-- **Overlap**: does other code do the same thing differently?
-- **Issues**: bugs, tech debt, deprecations, inconsistencies
+Each subagent receives a self-contained prompt with:
+1. The area name and its questions to answer
+2. Known entry points / file paths for that area
+3. The full context from Phase 1 (topic, background, any user notes)
+4. Instructions on what to return
 
-Be exhaustive with consumers — read each file to confirm what it actually uses.
+### Subagent prompt template
+
+```
+Investigate "{area-name}" in this codebase. Answer these questions:
+
+{paste the questions for this area from the README}
+
+Context: {topic and background from Phase 1}
+Entry points: {known files/functions for this area}
+
+For each question, gather evidence by:
+- Finding definitions: where the code lives, what it exports
+- Tracing dependencies: what it imports/calls/depends on
+- Finding ALL consumers: grep for imports, exclude .spec. and .test. files
+- Reading each consumer to confirm what specific data it uses
+- Checking for overlap: does other code do the same thing differently?
+- Noting issues: bugs, tech debt, deprecations, inconsistencies
+
+Return a structured report with:
+- Answer to each question with supporting evidence (file paths, code references)
+- A table of all consumers found (Consumer | File | What it uses)
+- A list of issues/observations
+- Any related areas that connect to other parts of the investigation
+```
+
+Use `subagent_type: "explore"` with thoroughness "very thorough" for each.
+
+### After all subagents return
+
+1. Collect all results
+2. Cross-reference findings between areas (look for contradictions or missing connections)
+3. Proceed to Phase 5
 
 ---
 
