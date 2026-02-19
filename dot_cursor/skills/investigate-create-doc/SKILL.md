@@ -36,34 +36,54 @@ Output goes to: `docs/{directory-name}/`
 
 ---
 
-## Phase 2 — Plan the Investigation
+## Phase 2 — Define Questions (DO NOT INVESTIGATE YET)
 
-1. Explore the codebase starting from entry points (or search broadly if none given)
-2. Identify distinct areas/topics that emerge
-3. Decide scope:
-   - **Single doc** — if the topic fits in one cohesive document (under ~200 lines of findings)
-   - **Multi-doc** — if there are 2+ distinct sub-topics worth their own deep-dive
+The goal of this phase is to understand **what needs to be answered**, not to answer anything.
 
-Present the plan to the user:
+1. Do a **light** codebase scan — just enough to identify the shape of the problem (file names, export names, rough structure). Do NOT read full files or trace consumers yet.
+2. From the topic, context, and light scan, produce a list of **questions that need answering**.
+3. Group questions by area/theme. Each group may become a sub-doc later.
+4. Write the questions to the README immediately using the "Questions to Answer" section in the template.
+
+**STOP HERE.** Present the questions to the user and get confirmation before proceeding. The user may add, remove, or reword questions.
 
 ```
-I found N distinct areas to investigate:
-1. {area-name} — {one-line description}
-2. {area-name} — {one-line description}
-...
+Questions to answer:
 
-I'll create:
-  docs/{dir-name}/README.md          ← overview + links
-  docs/{dir-name}/{area-name}.md     ← deep-dive per area
+## {Area 1}
+- Q: {question}?
+- Q: {question}?
+
+## {Area 2}
+- Q: {question}?
+
+Does this cover everything, or should I add/change any questions?
 ```
-
-Get confirmation before writing.
 
 ---
 
-## Phase 3 — Investigate Each Area
+## Phase 3 — Plan the Investigation
 
-For each area, use explore/search subagents to gather:
+After the user confirms the questions:
+
+1. Map each question group to a sub-doc
+2. Decide scope:
+   - **Single doc** — if all questions fit in one cohesive document (under ~200 lines of findings)
+   - **Multi-doc** — if there are 2+ distinct areas worth their own deep-dive
+3. Present the proposed doc structure:
+
+```
+docs/{dir-name}/README.md          ← overview, questions, links
+docs/{dir-name}/{area-name}.md     ← answers for each area
+```
+
+Get confirmation before investigating.
+
+---
+
+## Phase 4 — Investigate Each Area
+
+For each area, use explore/search subagents to **answer the defined questions**:
 
 - **Definitions**: where the code lives, what it exports
 - **Dependencies**: what it imports/calls/depends on
@@ -76,7 +96,7 @@ Be exhaustive with consumers — read each file to confirm what it actually uses
 
 ---
 
-## Phase 4 — Write the Documents
+## Phase 5 — Write the Documents
 
 ### Directory structure
 
@@ -129,7 +149,7 @@ In the README, link to each sub-doc:
 
 ---
 
-## Phase 5 — Review & Finalize
+## Phase 6 — Review & Finalize
 
 1. Re-read all generated docs for consistency
 2. Verify all cross-links are correct

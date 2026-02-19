@@ -2,12 +2,29 @@
 
 **Context:** {Why this investigation exists — ticket, refactor goal, question to answer}
 **Date:** {date}
+**Status:** {Questions Defined | In Progress | Complete}
+
+---
+
+## Questions to Answer
+
+{Written in Phase 2 BEFORE investigation begins. Each group may become a sub-doc.}
+
+### {Area 1}
+
+- [ ] {Question}?
+- [ ] {Question}?
+
+### {Area 2}
+
+- [ ] {Question}?
+- [ ] {Question}?
 
 ---
 
 ## Summary
 
-{1-2 paragraph overview of the investigation scope and high-level findings}
+{1-2 paragraph overview of the investigation scope and high-level findings. Written AFTER investigation.}
 
 ### At a Glance
 
