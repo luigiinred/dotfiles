@@ -45,20 +45,34 @@ The goal of this phase is to understand **what needs to be answered**, not to an
 3. Group questions by area/theme. Each group may become a sub-doc later.
 4. Write the questions to the README immediately using the "Questions to Answer" section in the template.
 
-**STOP HERE.** Present the questions to the user and get confirmation before proceeding. The user may add, remove, or reword questions.
+**STOP HERE.** Review the questions with the user one area at a time using AskQuestion.
+
+### Review loop
+
+For **each area**, present its questions and ask:
 
 ```
-Questions to answer:
-
-## {Area 1}
-- Q: {question}?
-- Q: {question}?
-
-## {Area 2}
-- Q: {question}?
-
-Does this cover everything, or should I add/change any questions?
+AskQuestion:
+  prompt: "Area: {area-name}\n\nProposed questions:\n1. {q1}\n2. {q2}\n..."
+  options:
+    - "Looks good"
+    - "Adjust (I'll explain)"
+    - "Remove this area"
 ```
+
+If the user says "Adjust", apply their changes and re-present.
+
+After all areas are reviewed, ask one final question:
+
+```
+AskQuestion:
+  prompt: "Any other questions or areas to add?"
+  options:
+    - "No, this covers it — proceed"
+    - "Yes, I want to add more (I'll explain)"
+```
+
+Only after the user confirms, write the finalized questions to the README and proceed to Phase 3.
 
 ---
 
