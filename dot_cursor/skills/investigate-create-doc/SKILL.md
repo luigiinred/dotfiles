@@ -45,34 +45,38 @@ The goal of this phase is to understand **what needs to be answered**, not to an
 3. Group questions by area/theme. Each group may become a sub-doc later.
 4. Write the questions to the README immediately using the "Questions to Answer" section in the template.
 
-**STOP HERE.** Review the questions with the user one area at a time using AskQuestion.
+**STOP HERE.** Review the questions with the user using AskQuestion.
 
-### Review loop
+### Review: one call, all areas
 
-For **each area**, present its questions and ask:
+Make a **single** AskQuestion call with an array containing **one question per area**. Each question in the array shows that area's proposed questions and lets the user approve, adjust, or remove it.
 
+```json
+AskQuestion({
+  "title": "Review Investigation Questions",
+  "questions": [
+    {
+      "id": "area-1",
+      "prompt": "Area: {area-1-name}\n\n1. {q1}?\n2. {q2}?\n3. {q3}?",
+      "options": ["Looks good", "Adjust (I'll explain)", "Remove this area"]
+    },
+    {
+      "id": "area-2",
+      "prompt": "Area: {area-2-name}\n\n1. {q1}?\n2. {q2}?",
+      "options": ["Looks good", "Adjust (I'll explain)", "Remove this area"]
+    },
+    {
+      "id": "add-more",
+      "prompt": "Any other questions or areas to add?",
+      "options": ["No, this covers it — proceed", "Yes, I want to add more (I'll explain)"]
+    }
+  ]
+})
 ```
-AskQuestion:
-  prompt: "Area: {area-name}\n\nProposed questions:\n1. {q1}\n2. {q2}\n..."
-  options:
-    - "Looks good"
-    - "Adjust (I'll explain)"
-    - "Remove this area"
-```
 
-If the user says "Adjust", apply their changes and re-present.
+If the user says "Adjust" for any area, apply their changes and re-present just that area. If they want to add more, collect the additions and re-confirm.
 
-After all areas are reviewed, ask one final question:
-
-```
-AskQuestion:
-  prompt: "Any other questions or areas to add?"
-  options:
-    - "No, this covers it — proceed"
-    - "Yes, I want to add more (I'll explain)"
-```
-
-Only after the user confirms, write the finalized questions to the README and proceed to Phase 3.
+Only after all areas are confirmed, write the finalized questions to the README and proceed to Phase 3.
 
 ---
 
