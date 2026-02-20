@@ -50,6 +50,7 @@ The device is frozen at the failure point. Use **both** Maestro MCP tools:
 - `user-maestro-inspect_view_hierarchy` — all elements with text, IDs, bounds, and states
 
 Search the hierarchy for:
+
 - The element the test was looking for (exact text or ID match)
 - Similar elements with slightly different text, IDs, or casing
 - Whether the expected element exists but is off-screen or hidden
@@ -64,29 +65,29 @@ appId: com.guideline.mobile
 - tapOn: <the selector that failed>
 ```
 
-- **Command succeeds** → The element IS accessible, but wasn't ready during the test run. This is a **timing/accessibility tree hydration issue**. The React Native accessibility tree may not populate immediately after a screen transition — it can lag behind the visual render and may need interaction (scroll, tap) to kick it into gear. Fix with `scrollUntilVisible` (which forces tree refresh on each scroll attempt) before the failing step.
+- **Command succeeds** → The element IS accessible, but wasn't ready during the test run. This is a **timing issue**. Fix with `extendedWaitUntil` to wait for the element before acting on it.
 - **Command fails** → The element genuinely doesn't exist or has changed. Proceed to 2f to determine why.
 
 #### 2f. Compare expected vs actual
 
-| | Expected (from test YAML) | Actual (from device) |
-|---|---|---|
-| **Screen** | What screen should the test be on? | What screen is actually showing? |
-| **Element** | What text/ID is the test looking for? | Is it present? Under a different name? |
-| **State** | What state should the app be in? | Is it loading, showing an error, or on a different screen? |
+|             | Expected (from test YAML)             | Actual (from device)                                       |
+| ----------- | ------------------------------------- | ---------------------------------------------------------- |
+| **Screen**  | What screen should the test be on?    | What screen is actually showing?                           |
+| **Element** | What text/ID is the test looking for? | Is it present? Under a different name?                     |
+| **State**   | What state should the app be in?      | Is it loading, showing an error, or on a different screen? |
 
 #### 2g. Determine root cause
 
-| Category | Symptoms | How to confirm |
-|----------|----------|----------------|
+| Category                   | Symptoms                                                          | How to confirm                                                          |
+| -------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **Accessibility tree lag** | Element visible in screenshot, MCP command works, but test failed | Hierarchy is empty/sparse despite full visual render. MCP tap succeeds. |
-| **Text changed** | Element not found, but similar text in hierarchy | Search for partial match |
-| **ID changed** | ID not found in hierarchy | Search by visible text instead |
-| **Wrong screen** | Expected element doesn't exist anywhere | Screenshot shows unexpected screen |
-| **Loading/timing** | Spinner or skeleton visible | Hierarchy contains loading indicators |
-| **Off-screen** | Element in hierarchy but not in screenshot | Bounds outside viewport |
-| **Conditional flow** | A `when` guard skipped a required step | Check env vars and conditional logic |
-| **New modal/sheet** | Overlay blocking interaction | Screenshot/hierarchy show modal |
+| **Text changed**           | Element not found, but similar text in hierarchy                  | Search for partial match                                                |
+| **ID changed**             | ID not found in hierarchy                                         | Search by visible text instead                                          |
+| **Wrong screen**           | Expected element doesn't exist anywhere                           | Screenshot shows unexpected screen                                      |
+| **Loading/timing**         | Spinner or skeleton visible                                       | Hierarchy contains loading indicators                                   |
+| **Off-screen**             | Element in hierarchy but not in screenshot                        | Bounds outside viewport                                                 |
+| **Conditional flow**       | A `when` guard skipped a required step                            | Check env vars and conditional logic                                    |
+| **New modal/sheet**        | Overlay blocking interaction                                      | Screenshot/hierarchy show modal                                         |
 
 ## Step 3: Fix and continue via MCP
 
@@ -96,15 +97,25 @@ After diagnosing, apply the fix to the YAML **and** continue running the remaini
 
 Edit the test file (or sub-flow) with the minimal change needed. Preserve headers, comments, and existing patterns.
 
-Common fixes (in order of likelihood):
+**Choosing the right fix — always check the screenshot first:**
+
+1. **Take a screenshot** (`user-maestro-take_screenshot`) to see the actual screen.
+2. **Is the element visible on screen?**
+   - **Yes, on screen** → Timing issue. Use `extendedWaitUntil` to wait for the element.
+   - **Yes, but below the fold / off-screen** → Use `scrollUntilVisible` to scroll to it.
+   - **No, wrong screen entirely** → Fix navigation or conditional logic.
+
+**Never use `scrollUntilVisible` for timing.** It should only be used when the element is genuinely off-screen. For timing issues, use `extendedWaitUntil`.
+
+Common fixes:
 
 | Symptom | Fix |
 |---------|-----|
-| MCP tap works but test can't find element (accessibility tree lag) | Add `scrollUntilVisible` with direction and timeout before the tap |
-| Element exists in screenshot but test couldn't find it | Add `waitForAnimationToEnd` before the step |
-| Screen still loading | Add `extendedWaitUntil` with timeout |
+| Element on screen but test couldn't find it (timing) | Add `extendedWaitUntil` with visible selector and generous timeout |
+| MCP command works but test failed (timing) | Add `extendedWaitUntil` before the step |
+| Element below the fold / off-screen | Add `scrollUntilVisible` before the tap/assert |
+| Screen still loading (spinner visible) | Add `extendedWaitUntil` for post-loading content |
 | Text not found | Update selector to match current accessibility text |
-| Element off-screen | Add `scrollUntilVisible` before the tap/assert |
 | New modal/sheet | Add optional dismiss: `tapOn: text: "Got it", optional: true` |
 | Element ID renamed | Update `id` to match current hierarchy |
 | Navigation path changed | Add/update tap steps for new intermediate screens |
@@ -147,6 +158,7 @@ maestro test --test-output-dir=build/maestro-results <resolved-path>
 ## Reporting
 
 After each loop iteration, briefly report:
+
 1. **Failed step** and root cause
 2. **Fix applied** (what changed and why)
 3. **Re-run result** (pass / new failure / same failure)
