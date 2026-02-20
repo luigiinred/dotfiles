@@ -88,15 +88,13 @@ appId: com.guideline.mobile
 | **Conditional flow** | A `when` guard skipped a required step | Check env vars and conditional logic |
 | **New modal/sheet** | Overlay blocking interaction | Screenshot/hierarchy show modal |
 
-## Step 3: Fix
+## Step 3: Fix and continue via MCP
 
-Apply the **minimal change** to the test YAML to resolve the failure:
+After diagnosing, apply the fix to the YAML **and** continue running the remaining steps on the live device using `user-maestro-run_flow`. This avoids restarting the entire test from scratch for each fix.
 
-- Only change what's needed to fix the current failure
-- Preserve headers (appId, env, tags) and existing comments
-- Match existing patterns in the file
-- **If the MCP command worked but the test failed**, the accessibility tree wasn't ready. Use `scrollUntilVisible` which forces the tree to refresh on each scroll attempt.
-- **If the element looks correct but wasn't found**, add `waitForAnimationToEnd` before the failing step for simple animation timing issues.
+### 3a. Apply the fix to the YAML
+
+Edit the test file (or sub-flow) with the minimal change needed. Preserve headers, comments, and existing patterns.
 
 Common fixes (in order of likelihood):
 
@@ -112,9 +110,30 @@ Common fixes (in order of likelihood):
 | Navigation path changed | Add/update tap steps for new intermediate screens |
 | Conditional skipped needed step | Set env var or make step unconditional |
 
-## Step 4: Re-run and evaluate
+### 3b. Run remaining steps via MCP
 
-Clean results and re-run:
+Instead of re-running the full test from the beginning, use `user-maestro-run_flow` to execute the **remaining commands** from the failure point forward. Build a YAML snippet containing the commands that haven't run yet (from the failed step onward, incorporating your fix).
+
+```yaml
+appId: com.guideline.mobile
+---
+# The fixed version of the failed step
+- <fixed command>
+# Remaining steps from the flow that haven't executed yet
+- <next command>
+- <next command>
+...
+```
+
+- **All remaining steps pass** → The fix works. Proceed to Step 4 for a full re-run to confirm.
+- **A later step fails** → You found the next issue without restarting. Diagnose it (go back to Step 2) using the device's current state.
+- **The fixed step still fails** → The fix was wrong. Re-diagnose with the new information.
+
+This is much faster than a full re-run because the app is already logged in and navigated to the right screen.
+
+## Step 4: Full re-run to confirm
+
+Once all steps pass via MCP, do a clean full re-run to make sure everything works end-to-end:
 
 ```bash
 rm -rf build/maestro-results
@@ -122,9 +141,8 @@ maestro test --test-output-dir=build/maestro-results <resolved-path>
 ```
 
 - **Test passed** → Report the fix summary and stop.
-- **Test failed on a new step** → Go back to Step 2 with the new failure.
-- **Same step fails again** → Re-diagnose; the fix was insufficient. Try a different approach.
-- **3+ failed attempts on the same step** → Stop and report. It may be an app bug, not a test issue.
+- **Test failed** → Go back to Step 2. The failure may be a timing issue that only appears on a cold start.
+- **3+ full re-run failures on the same step** → Stop and report. It may be an app bug, not a test issue.
 
 ## Reporting
 
