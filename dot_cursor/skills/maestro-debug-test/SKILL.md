@@ -110,10 +110,14 @@ appId: com.guideline.mobile
 - An element moved off-screen but is still in the hierarchy
 - A new modal or sheet appeared that just needs dismissing
 
-When prompting, present:
-1. What the test expected vs. what the app actually shows
-2. Whether this looks like an intentional UI change or a potential regression
-3. Ask the user: should the test be updated to match the new behavior, or is this an app bug?
+When prompting, **always use the `AskQuestion` tool** (never ask conversationally). Present the context in the question prompt and provide structured options:
+
+1. Summarize what the test expected vs. what the app actually shows
+2. Note whether this looks like an intentional UI change or a potential regression
+3. Offer options such as:
+   - "Update the test to match the new behavior"
+   - "This is an app bug — skip this fix"
+   - "I need to investigate more before deciding"
 
 **Scope fixes precisely.** When a failure affects one specific tab/view/state, only fix that specific case. Do not blanket-apply the same fix to similar assertions in other tabs/views unless you have confirmed each one independently. For example, if "Last 7 days" no longer shows percentages, do NOT assume "Your all time" and "# of shares" also changed — check each one separately.
 
