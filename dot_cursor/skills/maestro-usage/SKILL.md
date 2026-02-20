@@ -236,4 +236,5 @@ Methods: `http.get()`, `http.post()`, `http.put()`, `http.delete()`, `http.reque
 
 - Full command API with all options: [resources/api-reference.md](resources/api-reference.md)
 - Best practices and patterns: [resources/best-practices.md](resources/best-practices.md)
+- Maestro MCP tool reference: [resources/mcp-reference.md](resources/mcp-reference.md)
 - Official docs: https://maestro.mobile.dev
