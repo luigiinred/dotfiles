@@ -1,188 +1,272 @@
 ---
 name: investigate-create-dependency-graph
-description: Generate a layered Mermaid dependency graph for functions, hooks, providers, or components. Traces parents (what a symbol imports/calls) and children (what consumes it), classifies nodes by type, and outputs a row-grouped diagram. Use when the user asks to map dependencies, visualize what uses what, create a dependency diagram, or trace hook/query/provider relationships.
+description: Generate dependency diagrams from code or architecture. Traces code-level dependencies (hooks, queries, providers, components) or maps high-level system architecture. Outputs Mermaid diagrams in markdown or FigJam via Figma MCP. Use when the user asks to map dependencies, visualize relationships, create a dependency diagram, diagram an architecture, or trace how systems connect.
 ---
 
-# Dependency Graph Generator
+# Dependency Diagram Generator
 
-Build a layered Mermaid dependency diagram from one or more code entry points.
+Generate dependency diagrams at any level — from code-level hook/query tracing to high-level architecture maps.
 
 ## Phase 1 — Gather Requirements
 
 Use AskQuestion to collect:
 
-### 1. Entry points
+### 1. Scope detection
 
-Ask: "Which functions, hooks, providers, or components should I trace? (names or file paths)"
+| Scope | When to use | Examples |
+|---|---|---|
+| **Code-level** | Tracing function/hook/component dependencies | "Map dependencies of useQueryUserAccounts", "What calls AccountProvider?" |
+| **Architecture-level** | Mapping services, teams, integrations | "Diagram the Payroll system", "Map Risk Engineering architecture" |
 
-This is free-text — the user provides names like `useQueryUserAccounts`, `AccountProvider`, or paths like `src/features/me/hooks/useUserAccounts.ts`.
+If ambiguous, ask which scope the user intends.
 
-### 2. Dependency types
+### 2. Entry points
+
+- **Code-level**: function names, hook names, component names, or file paths
+- **Architecture-level**: system, team, or domain name
+
+### 3. Tracing options (code-level only)
 
 Ask with multi-select:
 
 | Option | What it traces |
-|--------|---------------|
-| **Hook calls** | `useX()` calls inside the function body |
-| **GraphQL queries** | `useQuery`, `useSuspenseQuery`, `useMutation` with document imports |
-| **Context providers** | React context providers consumed (`useContext`, custom context hooks) |
-| **HOC wrappers** | `withX()` higher-order components |
-| **All of the above** | Everything |
+|---|---|
+| Hook calls | `useX()` calls inside function bodies |
+| GraphQL queries | `useQuery`, `useSuspenseQuery`, `useMutation` with document imports |
+| Context providers | React context providers consumed |
+| HOC wrappers | `withX()` higher-order components |
+| All of the above | Everything |
 
 Default: **All of the above**
 
-### 3. Depth
-
-Ask: "How many levels deep should I trace?"
+### 4. Depth (code-level only)
 
 | Option | Behavior |
-|--------|----------|
-| **Bounded (default: 3)** | Trace up to N levels of parents and children |
-| **Full tree** | Trace recursively until no more dependencies found |
-| **Immediate only** | Direct parents and children only (depth 1) |
+|---|---|
+| Bounded (default: 3) | Trace up to N levels |
+| Full tree | Trace until no more dependencies found |
+| Immediate only | Direct parents/children only |
 
-Default: **Bounded at 3 levels**
+### 5. Output format
 
-### 4. Output location
+| Option | Requirement |
+|---|---|
+| **Mermaid in markdown** (default) | None |
+| **FigJam via Figma MCP** | Requires Figma MCP connected — verify with ToolSearch |
 
-Ask: "Where should I save the diagram?"
+### 6. Output location
 
-Default: suggest a filename based on the entry points, e.g. `dependency-graph-useQueryUserAccounts.md` in the project root.
+Suggest a filename based on entry points, e.g. `dependency-graph-useQueryUserAccounts.md`.
 
 ---
 
-## Phase 2 — Trace Dependencies
+## Phase 2 — Research
 
-Launch parallel explore subagents to trace the graph. For each entry point, trace both directions.
+### Code-level: Trace Dependencies
 
-### Tracing parents (what does this symbol depend on?)
+Launch parallel explore subagents to trace the graph in both directions from each entry point.
+
+#### Tracing parents (what does this symbol depend on?)
 
 For each file, look for:
 
-- **Hook calls**: any `useX(...)` call in the function body → find the definition file
-- **GraphQL documents**: imports of `*Document` passed to `useQuery`/`useSuspenseQuery`/`useMutation`
-- **Context reads**: `useContext(XContext)` or custom context hooks like `useUserState`
+- **Hook calls**: `useX(...)` calls → find definition files
+- **GraphQL documents**: imports of `*Document` passed to query/mutation hooks
+- **Context reads**: `useContext(XContext)` or custom context hooks
 - **Direct imports**: named imports from other project files (not node_modules)
 
-### Tracing children (what consumes this symbol?)
+#### Tracing children (what consumes this symbol?)
 
 Search the codebase for:
 
-- **Import references**: `grep` for the export name across `.ts`/`.tsx` files
+- **Import references**: grep for the export name across `.ts`/`.tsx` files
 - **Hook consumers**: files that call `useX()` where X is the traced symbol
 - **Provider wrappers**: files that render `<XProvider>` or use `withX()` HOC
 
-### Classifying nodes
+#### Classifying nodes
 
-Assign each discovered node a **type**:
+| Type | How to identify |
+|---|---|
+| `graphql-query` | Fires a query/mutation via document import |
+| `data-hook` | Custom hook that fires a GraphQL query |
+| `context-provider` | Exports a React context Provider |
+| `composition-hook` | Custom hook calling other hooks, no query |
+| `component` | React component (JSX return) |
+| `hoc` | Higher-order component (`withX`) |
+| `deprecated` | Has `@deprecated` JSDoc tag |
 
-| Type | How to identify | Mermaid style |
-|------|----------------|---------------|
-| `graphql-query` | File imports a `*Document` and passes it to a query/mutation hook | Green parallelogram `[/"..."/]` |
-| `data-hook` | Custom hook that fires a GraphQL query | Purple rectangle |
-| `context-provider` | Exports a React context `Provider` component | Orange rectangle |
-| `composition-hook` | Custom hook that calls other hooks but fires no query | Pink rectangle |
-| `component` | React component (JSX return) | Gray rectangle |
-| `hoc` | Higher-order component (`withX`) | Dashed border rectangle |
-| `deprecated` | Has `@deprecated` JSDoc tag | Red rectangle |
-
-### Data to collect per node
+#### Data per node
 
 ```
-- id: sanitized name for Mermaid (no special chars)
+- id: sanitized name for Mermaid
 - label: display name
 - file: relative file path
 - type: one of the types above
 - query_name: (if graphql-query) the operation name
 - query_fields: (if graphql-query) root fields summary
-- edges_to: list of { target_id, label } for outgoing dependencies
+- edges_to: list of { target_id, label }
 ```
+
+### Architecture-level: Research the System
+
+Run documentation search and codebase exploration in parallel.
+
+#### Documentation search
+
+If Glean MCP is available, search for:
+
+- Architecture docs, tech specs, strategy docs
+- Team formation / org docs
+- Service ownership and on-call docs
+- Integration docs (vendor partnerships, platform dependencies)
+
+Run multiple searches with different keyword angles for broad coverage.
+
+#### Codebase exploration
+
+Search for:
+
+- **Team config files**: `config/teams/**/<team>.yml` for owned gems, Kafka topics, feature flags, Sidekiq queues, service ownership — the single most information-dense source
+- **Pack/module structure**: `packs/product_services/<domain>/` directories, `package.yml`, sub-pack organization
+- **Service classes and models**: domain models, service objects under the team's Ruby module namespace
+- **External integrations**: `*_client` gems and API wrappers listed in `owned_gems`
+- **Messaging infrastructure**: Kafka producer/consumer definitions, Sidekiq workers
+- **GraphQL subgraphs**: `graphql_service_list.json` for subgraphs owned by the domain
+- **CLAUDE.md files**: `**/CLAUDE.md` files contain structured domain knowledge
+
+#### Synthesize into categories
+
+Organize findings into: Pods/Teams, Services/Systems, Shared Infrastructure, External Vendors, Platform Dependencies, Key Flows.
 
 ---
 
-## Phase 3 — Build the Layered Diagram
+## Phase 3 — Verify Terminology
 
-### Row assignment algorithm
+**STOP — present findings to user before proceeding.**
 
-1. **Find roots**: nodes with no parents in the traced set
-2. **Find leaves**: nodes with no children in the traced set
-3. **Assign layers by longest path from root** (topological sort):
-   - Layer 0 = GraphQL queries (always top row if present)
-   - Remaining nodes: layer = 1 + max(layer of all parents)
-4. **Group nodes into subgraphs by layer**
+A wrong label is worse than a missing one. For every node you plan to include:
 
-### Row naming convention
+1. Search for the **exact name** in both docs and code
+2. If docs and code use different terms, note both and let the user pick
+3. If you cannot find a term in either source, **do not include it**
 
-Assign descriptive names to each row based on the node types it contains:
+Present a terminology summary table:
 
-| Primary type in row | Row label |
-|---------------------|-----------|
+| Planned Label | Found in Code? | Found in Docs? | Notes |
+|---|---|---|---|
+
+Wait for user confirmation before continuing.
+
+---
+
+## Phase 4 — Negotiate Scope
+
+**STOP — present the plan to user before proceeding.**
+
+Present:
+
+### Node count and arrow budget
+
+- 15-20 arrows for simple diagrams
+- Up to 25 for complex ones
+- Beyond 25: propose splitting into focused sub-diagrams
+
+### Layout
+
+**Code-level**: Top-down (`graph TD`) with rows grouped by node type.
+
+Row assignment:
+1. Find roots (no parents in traced set) and leaves (no children)
+2. Layer 0 = GraphQL queries (always top if present)
+3. Remaining: layer = 1 + max(layer of all parents)
+4. Group into subgraphs by layer
+
+Row naming by dominant type:
+
+| Type | Row label |
+|---|---|
 | `graphql-query` | "GraphQL Queries" |
-| `data-hook` (root, no hook parents) | "Root Data Hooks" |
+| `data-hook` (root) | "Root Data Hooks" |
 | `context-provider` | "Context Providers" |
-| `data-hook` (has hook parents) | "Data-Fetching Hooks" |
+| `data-hook` (leaf) | "Data-Fetching Hooks" |
 | `composition-hook` | "Composition Hooks" |
 | `component` | "Components" |
 
-If a row has mixed types, use the dominant type for naming.
+**Architecture-level**: Offer layout choice:
 
-### Mermaid template
+| Layout | Best for |
+|---|---|
+| **Horizontal flow** (LR, default) | Data flowing through a system |
+| **Ownership map** | What each team owns, minimal arrows |
+| **Integration map** | External boundaries and vendor connections |
+| **Decision flow** | End-to-end workflow with branch points |
 
-Generate the diagram following this structure:
-
-````markdown
-```mermaid
-graph TD
-    %% ══ Row N — {Row Label} ══
-    subgraph row_n ["{Row Label}"]
-        direction LR
-        nodeId["<b>DisplayName</b><br/><i>filename.ts</i>"]
-    end
-
-    %% ... more rows ...
-
-    %% ── Styles ──
-    style row_n fill:#...,stroke:#...,color:#...
-
-    %% ── Edges ──
-    source -->|label| target
-    source -.->|label| target
-```
-````
-
-### Style palette
-
-| Node type | fill | stroke | color |
-|-----------|------|--------|-------|
-| `graphql-query` | `#e8f5e9` | `#2e7d32` | `#1b5e20` |
-| `data-hook` (root) | `#e3f2fd` | `#1565c0` | `#0d47a1` |
-| `context-provider` | `#fff3e0` | `#e65100` | `#bf360c` |
-| `data-hook` (leaf) | `#f3e5f5` | `#6a1b9a` | `#4a148c` |
-| `composition-hook` | `#fce4ec` | `#880e4f` | `#880e4f` |
-| `component` | `#f5f5f5` | `#616161` | `#212121` |
-| `deprecated` | `#ffebee` | `#c62828` | `#b71c1c` |
-
-### Edge conventions
-
-| Meaning | Mermaid syntax |
-|---------|---------------|
-| Fires a GraphQL query | `-.->` (dotted) with query hook name as label |
-| Depends on another hook/provider | `-->` (solid) with consumed export as label |
+Wait for user approval before generating.
 
 ---
 
-## Phase 4 — Generate Output Document
+## Phase 5 — Generate Diagram
 
-Write a markdown file with these sections:
+See [reference-mermaid.md](reference-mermaid.md) for Mermaid syntax rules, style palette, and layout heuristics.
 
-1. **Title** — "Dependency Graph: {entry point names}"
-2. **Mermaid diagram** — the layered graph
+### Markdown output
+
+Write a markdown file with:
+
+1. **Title** — "Dependency Graph: {entry point or system names}"
+2. **Mermaid diagram** — the layered graph following the reference rules
 3. **Legend** — table mapping row colors to meanings, edge styles to meanings
-4. **Node inventory** — table: Name, File, Type, Query (if any), Direct dependents count
-5. **Key observations** — bullet list of notable findings (duplicates, circular deps, over-fetching, deprecated usage)
+4. **Node inventory** — table: Name, File/Source, Type, Dependencies count
+5. **Key observations** — notable findings (duplicates, circular deps, over-fetching, deprecated usage, missing connections)
+
+### FigJam output
+
+Use `mcp__plugin_figma_figma__generate_diagram` with Mermaid syntax. After generating, share the FigJam URL.
+
+Note: FigJam ignores Mermaid `style` directives and doesn't support emojis or `\n`. Colors cannot convey meaning in FigJam output — use node placement and labeling instead.
+
+Frame output as: "This is a first draft — layout will need manual adjustment in FigJam."
 
 ---
 
-## Reference: Example Output
+## Phase 6 — Audit
 
-See [dependency-graph-example.md](dependency-graph-example.md) for a complete example of the output format (the account context dependency graph).
+After generating, audit every label. Categorize:
+
+| Severity | Definition | Action |
+|---|---|---|
+| **Wrong** | Refers to something that doesn't exist or misattributes a relationship | Must fix |
+| **Imprecise** | Correct but uses a paraphrase instead of the official term | Flag for user |
+| **Inferred** | Relationship you believe exists but can't trace to a specific source | Flag with caveat |
+| **Verified** | Confirmed in code, docs, or both | Note the source |
+
+Check:
+
+- **Node labels**: Does this name appear in docs or code? Is any acronym expansion correct?
+- **Edge labels**: Is this a real, documented relationship? Watch for fabricated queue names or generic labels like "sends data"
+- **Missing nodes**: Are there systems/hooks visible in code that aren't on the diagram?
+- **Structural accuracy**: Are nodes in the correct groups/layers?
+
+Present audit as a table: Label | Severity | Source | Notes
+
+---
+
+## Phase 7 — Iterate
+
+Most diagrams take 2-3 rounds. Common patterns:
+
+| Request | How to handle |
+|---|---|
+| "Arrows are messy" | Reduce count, reorder node declarations, suggest manual rearrangement |
+| "What does X mean?" | Explain and cite source. If inferred, say so immediately |
+| "This is called Y, not X" | Fix. User correction always wins. Verify in code |
+| "Add/remove X" | Regenerate with change. Re-audit affected labels |
+| "Split this up" | Break into focused diagrams, each standalone |
+| "Trace deeper into X" | Re-run Phase 2 scoped to that node, extend the existing graph |
+
+---
+
+## Reference
+
+- [Mermaid syntax rules and style palette](reference-mermaid.md)
+- [Example output: account context dependency graph](dependency-graph-example.md)
