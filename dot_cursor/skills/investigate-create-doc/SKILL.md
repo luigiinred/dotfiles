@@ -128,10 +128,13 @@ For each question, gather evidence by:
 - Noting issues: bugs, tech debt, deprecations, inconsistencies
 
 Return a structured report with:
-- Answer to each question with supporting evidence (file paths, code references)
-- A table of all consumers found (Consumer | File | What it uses)
-- A list of issues/observations
-- Any related areas that connect to other parts of the investigation
+- A 1-3 sentence Recommendation / TLDR — an opinionated verdict on the area
+- A plain-language Definition of the concept/approach (2-4 sentences)
+- Deliverables: answer to each question as a heading + answer (Q&A format), with evidence (file paths, code refs, links)
+- Pros list — advantages, benefits
+- Cons list — disadvantages, risks, tech debt
+- Links & References — relevant PRs, docs, external resources
+- Related areas that connect to other parts of the investigation
 ```
 
 Use `subagent_type: "explore"` with thoroughness "very thorough" for each.
@@ -163,10 +166,13 @@ For single-doc investigations, just create `docs/{investigation-name}/README.md`
 Use the template at [templates/readme-template.md](templates/readme-template.md).
 
 Key rules:
-- Start with context (why this investigation exists)
-- Include an "At a Glance" summary table
-- Link to every sub-doc
-- End with key findings and recommendations
+- **Summary first** — open with an opinionated, narrative summary (1-3 paragraphs). Lead with the key takeaway or recommendation. Someone who only reads this section should walk away informed.
+- **Table of contents** — numbered list linking to each area and Next Steps
+- Brief intro paragraph explaining the document's purpose and what prompted it
+- **Numbered areas** — each area gets a numbered heading with a description and "Ideas / questions" list
+- **Explorations table** — if the investigation is split across people, include an assignment table (Exploration | Description | Suggested Lead)
+- **Next Steps** over "Recommendations" — concrete, actionable items
+- Link to every sub-doc from each area section
 - Cross-link sub-docs to each other where they relate
 
 ### Sub-doc format
@@ -174,10 +180,14 @@ Key rules:
 Use the template at [templates/sub-doc-template.md](templates/sub-doc-template.md).
 
 Key rules:
+- **Recommendation / TLDR first** — bold, opinionated conclusion at the top. The reader should know the verdict before reading details.
+- **Definition** — plain-language explanation of the concept/approach (2-4 sentences)
+- **Deliverables** — answer each question as a heading + answer (Q&A format), not checkboxes
+- **Pros / Cons** — separate sections with bullet lists, replacing "Issues & Observations"
+- **Links & References** — inline links to PRs, docs, external resources, branches
 - Self-contained — readable without the README
 - Link back to README and to related sub-docs
-- Include code references with file paths
-- Tables for structured data (consumers, return values, etc.)
+- Include code references with file paths where relevant
 
 ### Cross-linking
 

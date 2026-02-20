@@ -2,61 +2,48 @@
 
 > Part of [{Investigation Title}](./README.md)
 
----
+## Recommendation / TLDR
 
-## Summary
-
-{1-2 sentence description of this area and its role}
+{Bold, opinionated 1-3 sentence recommendation. What's the verdict? Should we use this? Is it worth the effort? Lead with the conclusion so the reader knows the outcome before diving into details.}
 
 ---
 
 ## Definition
 
-**File(s):** `{path/to/file}`
-
-### What it does
-
-{Description of the code's purpose and behavior}
-
-### Key exports
-
-| Export | Type | Description |
-|--------|------|-------------|
-| `{name}` | {type} | {what it does} |
+{What is this thing? Explain the concept, tool, approach, or system in plain language. Assume the reader has general engineering context but may not know this specific area. Keep it to 2-4 sentences.}
 
 ---
 
-## Dependencies
+## Deliverables
 
-| Dependency | Source | What it provides |
-|------------|--------|-----------------|
-| `{name}` | `{file}` | {what this area uses from it} |
+{Answer each question from the investigation plan. Format as question followed by answer. Keep answers concise but complete — include evidence, file paths, links, and code references where relevant.}
 
----
+### {Question 1}?
 
-## Consumers
+{Answer with supporting evidence}
 
-| Consumer | File | What it uses |
-|----------|------|-------------|
-| `{name}` | `{path}` | {specific fields/values extracted} |
+### {Question 2}?
+
+{Answer with supporting evidence}
 
 ---
 
-## Data Flow
+## Pros
 
-{Describe how data moves through this area: inputs → processing → outputs}
+- {Advantage or benefit, with brief explanation if needed}
+- {Advantage or benefit}
+
+## Cons
+
+- {Disadvantage or risk, with brief explanation if needed}
+- {Disadvantage or risk}
 
 ---
 
-## Overlap & Redundancy
+## Links & References
 
-{Does other code do the same thing? Different approaches to the same data?}
-
----
-
-## Issues & Observations
-
-- {Notable finding, deprecation, inconsistency, or tech debt}
+- [{Description}]({url}) — {brief note on relevance}
+- [{Description}]({url})
 
 ---
 
