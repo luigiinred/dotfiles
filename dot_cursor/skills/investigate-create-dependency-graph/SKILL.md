@@ -207,25 +207,12 @@ Wait for user approval before generating.
 
 ## Phase 5 — Generate Diagram
 
-See [reference-mermaid.md](reference-mermaid.md) for Mermaid syntax rules, style palette, and layout heuristics.
+Based on the output format chosen in Phase 1, read the corresponding guide and follow its rules:
 
-### Markdown output
+- **Mermaid in markdown** → read [output-mermaid.md](output-mermaid.md) for syntax rules, style palette, templates, and output file structure
+- **FigJam via Figma MCP** → read [output-figjam.md](output-figjam.md) for FigJam constraints, Figma MCP usage, and templates
 
-Write a markdown file with:
-
-1. **Title** — "Dependency Graph: {entry point or system names}"
-2. **Mermaid diagram** — the layered graph following the reference rules
-3. **Legend** — table mapping row colors to meanings, edge styles to meanings
-4. **Node inventory** — table: Name, File/Source, Type, Dependencies count
-5. **Key observations** — notable findings (duplicates, circular deps, over-fetching, deprecated usage, missing connections)
-
-### FigJam output
-
-Use `mcp__plugin_figma_figma__generate_diagram` with Mermaid syntax. After generating, share the FigJam URL.
-
-Note: FigJam ignores Mermaid `style` directives and doesn't support emojis or `\n`. Colors cannot convey meaning in FigJam output — use node placement and labeling instead.
-
-Frame output as: "This is a first draft — layout will need manual adjustment in FigJam."
+Each guide is self-contained — it has layout rules, edge conventions, templates for both code-level and architecture-level diagrams, and output instructions specific to that format.
 
 ---
 
@@ -268,5 +255,6 @@ Most diagrams take 2-3 rounds. Common patterns:
 
 ## Reference
 
-- [Mermaid syntax rules and style palette](reference-mermaid.md)
+- [Output guide: Mermaid in markdown](output-mermaid.md)
+- [Output guide: FigJam via Figma MCP](output-figjam.md)
 - [Example output: account context dependency graph](dependency-graph-example.md)

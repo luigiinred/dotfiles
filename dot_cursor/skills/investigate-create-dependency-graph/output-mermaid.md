@@ -1,21 +1,22 @@
-# Mermaid Diagram Reference
+# Output: Mermaid in Markdown
 
-Rules and conventions for generating clean, readable Mermaid diagrams.
+How to generate the diagram as a Mermaid code block inside a markdown file.
 
 ## Layout Rules
 
 - **Direction**: `graph TD` for code-level dependency trees (top-down). `flowchart LR` for architecture diagrams (left-to-right).
 - **Label every arrow**: Every edge MUST have a label. If you can't name the relationship, reconsider whether it belongs.
 - **Quote all text**: Double-quote all node labels and edge labels.
-- **Short subgraph names**: Under ~25 characters to avoid truncation.
+- **Short subgraph names**: Under ~25 characters to avoid truncation in renderers.
 - **Arrow budget**: 15-20 for simple diagrams, up to 25 for complex. Beyond 25, split into multiple diagrams.
 - **Node ordering**: Declare nodes in flow order. Dagre lays out in declaration order — inputs first, then processing, then outputs reduces arrow crossings.
 - **Edge ordering**: Group edges by direction. Define all forward edges before cross-subgraph edges. Mixing directions causes messy routing.
-- **Reduce fan-out**: If one node connects to 5+, introduce an intermediate aggregator node to funnel arrows through a single point.
+- **Reduce fan-out**: If one node connects to 5+, introduce an intermediate aggregator node.
 - **Subgraph direction**: Override parent direction with `direction TB` or `direction LR` inside individual subgraphs.
-- **FigJam limitations**: Ignores `style` directives, no emoji, no `\n`. Use these only for markdown output.
 
 ## Code-Level Style Palette
+
+Apply `style` directives to color nodes and subgraphs by type:
 
 | Node type | fill | stroke | color |
 |---|---|---|---|
@@ -34,6 +35,8 @@ Rules and conventions for generating clean, readable Mermaid diagrams.
 | `graphql-query` | Parallelogram `[/"..."/]` |
 | All others | Rectangle `["..."]` |
 | `hoc` | Dashed border (use `:::dashed` class) |
+
+Rich labels are supported — use `<b>` for names and `<br/><i>filename.ts</i>` for file paths.
 
 ## Edge Conventions
 
@@ -55,6 +58,7 @@ graph TD
 
     %% ── Styles ──
     style row_n fill:#...,stroke:#...,color:#...
+    style nodeId fill:#...,stroke:#...,color:#...
 
     %% ── Edges ──
     source -->|label| target
@@ -76,10 +80,21 @@ flowchart LR
 
     nd1 -->|"relationship"| nd3
     nd2 -.->|"cross-boundary"| nd3
+
+    style nd1 fill:#e3f2fd,stroke:#1565c0
+    style nd3 fill:#fff3e0,stroke:#e65100
 ````
 
-Use short, arbitrary node IDs (e.g., `nd1`, `nd2`) for architecture diagrams. Do not use domain acronyms as IDs to avoid confusion with domain concepts.
+## Output File Structure
+
+Write a markdown file with these sections:
+
+1. **Title** — "Dependency Graph: {entry point or system names}"
+2. **Mermaid diagram** — the layered graph
+3. **Legend** — table mapping row colors to meanings, edge styles to meanings
+4. **Node inventory** — table: Name, File/Source, Type, Dependencies count
+5. **Key observations** — notable findings (duplicates, circular deps, over-fetching, deprecated usage, missing connections)
 
 ## Context Nodes
 
-Some nodes exist to show organizational context (team ownership, platform dependencies) rather than data flow. These nodes may not have explicit arrows — their placement within a subgroup communicates their role. This is valid. Note context nodes so the user can add flow arrows later if needed.
+Some nodes exist to show organizational context (team ownership, platform dependencies) rather than data flow. Their placement within a subgroup communicates their role — not every node needs an arrow.
