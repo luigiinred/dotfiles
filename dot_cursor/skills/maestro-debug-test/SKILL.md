@@ -55,6 +55,8 @@ Search the hierarchy for:
 - Similar elements with slightly different text, IDs, or casing
 - Whether the expected element exists but is off-screen or hidden
 
+**Note:** Secure text inputs (password fields) may show placeholder text in screenshots even when they have values. The hierarchy `value` field will show masked dots (e.g. `•••••••••••`). Don't assume a password field is empty just because the screenshot shows the placeholder label.
+
 #### 2e. Try the failed command via MCP
 
 Use `user-maestro-run_flow` to attempt the exact failing command on the live device:
