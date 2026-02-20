@@ -54,7 +54,20 @@ Search the hierarchy for:
 - Similar elements with slightly different text, IDs, or casing
 - Whether the expected element exists but is off-screen or hidden
 
-#### 2e. Compare expected vs actual
+#### 2e. Try the failed command via MCP
+
+Use `user-maestro-run_flow` to attempt the exact failing command on the live device:
+
+```yaml
+appId: com.guideline.mobile
+---
+- tapOn: <the selector that failed>
+```
+
+- **Command succeeds** → The element IS accessible, but wasn't ready during the test run. This is a **timing/accessibility tree hydration issue**. The React Native accessibility tree may not populate immediately after a screen transition — it can lag behind the visual render and may need interaction (scroll, tap) to kick it into gear. Fix with `scrollUntilVisible` (which forces tree refresh on each scroll attempt) before the failing step.
+- **Command fails** → The element genuinely doesn't exist or has changed. Proceed to 2f to determine why.
+
+#### 2f. Compare expected vs actual
 
 | | Expected (from test YAML) | Actual (from device) |
 |---|---|---|
@@ -62,10 +75,11 @@ Search the hierarchy for:
 | **Element** | What text/ID is the test looking for? | Is it present? Under a different name? |
 | **State** | What state should the app be in? | Is it loading, showing an error, or on a different screen? |
 
-#### 2f. Determine root cause
+#### 2g. Determine root cause
 
 | Category | Symptoms | How to confirm |
 |----------|----------|----------------|
+| **Accessibility tree lag** | Element visible in screenshot, MCP command works, but test failed | Hierarchy is empty/sparse despite full visual render. MCP tap succeeds. |
 | **Text changed** | Element not found, but similar text in hierarchy | Search for partial match |
 | **ID changed** | ID not found in hierarchy | Search by visible text instead |
 | **Wrong screen** | Expected element doesn't exist anywhere | Screenshot shows unexpected screen |
@@ -81,14 +95,18 @@ Apply the **minimal change** to the test YAML to resolve the failure:
 - Only change what's needed to fix the current failure
 - Preserve headers (appId, env, tags) and existing comments
 - Match existing patterns in the file
+- **If the MCP command worked but the test failed**, the accessibility tree wasn't ready. Use `scrollUntilVisible` which forces the tree to refresh on each scroll attempt.
+- **If the element looks correct but wasn't found**, add `waitForAnimationToEnd` before the failing step for simple animation timing issues.
 
-Common fixes:
+Common fixes (in order of likelihood):
 
 | Symptom | Fix |
 |---------|-----|
+| MCP tap works but test can't find element (accessibility tree lag) | Add `scrollUntilVisible` with direction and timeout before the tap |
+| Element exists in screenshot but test couldn't find it | Add `waitForAnimationToEnd` before the step |
+| Screen still loading | Add `extendedWaitUntil` with timeout |
 | Text not found | Update selector to match current accessibility text |
 | Element off-screen | Add `scrollUntilVisible` before the tap/assert |
-| Screen still loading | Add `extendedWaitUntil` with timeout |
 | New modal/sheet | Add optional dismiss: `tapOn: text: "Got it", optional: true` |
 | Element ID renamed | Update `id` to match current hierarchy |
 | Navigation path changed | Add/update tap steps for new intermediate screens |
