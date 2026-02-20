@@ -10,7 +10,7 @@ Automate the full flow: stage specified files → lint → test → commit → p
 ## When to Use
 
 - User says "push this and create a PR", "ship this change", "commit, push, and open a PR uninterrupted"
-- User wants to use the same flow as dev-workflow-prepare-commit + dev-workflow-create-pr but in one shot with no confirmations
+- User wants to use the same flow as prepare-commit + create-pr but in one shot with no confirmations
 
 ## Phase 1: Collect Information Up Front
 
@@ -25,19 +25,13 @@ Before running any git or npm commands, gather (or infer) the following. If anyt
 
 **Single prompt if missing:**
 
-**ALWAYS use the AskQuestion tool** if critical information is missing:
+```
+To run the full flow without stopping, I need:
+1. Which file(s) to include (e.g. path or "these changes").
+2. Ticket: Jira key (e.g. RETIRE-1234) or say "unticketed" for RETIRE-1908.
 
-- Title: "Ship Simple Change - Information Needed"
-- Question: "To run the full flow without stopping, I need:\n1. Which file(s) to include (e.g., path or 'these changes')\n2. Ticket: Jira key (e.g., RETIRE-1234) or unticketed\n\nOptional: branch name, or commit message"
-- Options:
-  - id: "provide", label: "Let me provide the information"
-  - id: "abort", label: "Abort"
-
-If the user selects "provide", ask conversationally for:
-
-1. Files to include
-2. Ticket (or "unticketed" for RETIRE-1908)
-3. Optional: branch name or commit message
+Optional: branch name, or commit message (type + description).
+```
 
 After this, do **not** ask for confirmation before commit, push, or PR creation. Run through to the end and report the PR URL (or the step where you stopped and why).
 
@@ -160,9 +154,9 @@ Do not offer "proceed anyway" for critical issues or failing tests. Only stop an
 
 This skill is the **uninterrupted** variant of the same flow. For interactive steps (confirm message, confirm push, confirm PR), use instead:
 
-- **dev-workflow-prepare-commit** — commit with confirmations at each step
-- **dev-workflow-create-pr** — create PR after push, with option to review
-- **dev-workflow-initialize** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
+- **prepare-commit** — commit with confirmations at each step
+- **create-pr** — create PR after push, with option to review
+- **start-ticket** — create worktree + branch from a Jira ticket (or RETIRE-1908 for unticketed work)
 
 ## Checklist (for the agent)
 
