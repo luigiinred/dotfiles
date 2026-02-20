@@ -239,4 +239,5 @@ Methods: `http.get()`, `http.post()`, `http.put()`, `http.delete()`, `http.reque
 - CLI commands & flags: [resources/cli-reference.md](resources/cli-reference.md)
 - Best practices and patterns: [resources/best-practices.md](resources/best-practices.md)
 - Maestro MCP tool reference: [resources/mcp-reference.md](resources/mcp-reference.md)
+- Annotated examples: [examples/](examples/README.md) (utilities, test flows, advanced patterns, project structure)
 - Official docs: https://maestro.mobile.dev
