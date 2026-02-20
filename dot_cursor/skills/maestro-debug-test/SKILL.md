@@ -90,10 +90,36 @@ appId: com.guideline.mobile
 | **Off-screen**             | Element in hierarchy but not in screenshot                        | Bounds outside viewport                                                 |
 | **Conditional flow**       | A `when` guard skipped a required step                            | Check env vars and conditional logic                                    |
 | **New modal/sheet**        | Overlay blocking interaction                                      | Screenshot/hierarchy show modal                                         |
+| **Behavior change**        | Data or content the test asserted is missing/different             | Element exists but content changed — **prompt the user (Step 2h)**      |
+
+## Step 2h: Prompt the user when behavior changes are ambiguous
+
+**CRITICAL:** Before applying any fix, evaluate whether the failure is a **test issue** or a **possible app bug**. If the diagnosis shows the app's actual behavior has changed (not just a selector rename or timing problem), you MUST stop and ask the user before modifying the test.
+
+**Always prompt when:**
+
+- Data that the test expected to be visible is missing entirely (e.g., a price or percentage no longer appears)
+- The UI layout or content has structurally changed (e.g., fewer columns, different data in a view)
+- An element that previously existed is gone and there's no obvious replacement
+- The test was asserting specific business logic (e.g., "this tab shows percentages") and that behavior appears to have changed
+
+**Fix without prompting when:**
+
+- A selector (text or ID) was renamed but the element still exists with the same purpose
+- A timing issue caused the test to miss an element that is genuinely present
+- An element moved off-screen but is still in the hierarchy
+- A new modal or sheet appeared that just needs dismissing
+
+When prompting, present:
+1. What the test expected vs. what the app actually shows
+2. Whether this looks like an intentional UI change or a potential regression
+3. Ask the user: should the test be updated to match the new behavior, or is this an app bug?
+
+**Scope fixes precisely.** When a failure affects one specific tab/view/state, only fix that specific case. Do not blanket-apply the same fix to similar assertions in other tabs/views unless you have confirmed each one independently. For example, if "Last 7 days" no longer shows percentages, do NOT assume "Your all time" and "# of shares" also changed — check each one separately.
 
 ## Step 3: Fix and continue via MCP
 
-After diagnosing, apply the fix to the YAML **and** continue running the remaining steps on the live device using `user-maestro-run_flow`. This avoids restarting the entire test from scratch for each fix.
+After diagnosing (and prompting the user if needed per Step 2h), apply the fix to the YAML **and** continue running the remaining steps on the live device using `user-maestro-run_flow`. This avoids restarting the entire test from scratch for each fix.
 
 ### 3a. Apply the fix to the YAML
 
@@ -111,17 +137,17 @@ Edit the test file (or sub-flow) with the minimal change needed. Preserve header
 
 Common fixes:
 
-| Symptom | Fix |
-|---------|-----|
+| Symptom                                              | Fix                                                                     |
+| ---------------------------------------------------- | ----------------------------------------------------------------------- |
 | Element on screen but test couldn't find it (timing) | Add `extendedWaitUntil` with visible selector (default timeout: 5000ms) |
-| MCP command works but test failed (timing) | Add `extendedWaitUntil` before the step (default timeout: 5000ms) |
-| Element below the fold / off-screen | Add `scrollUntilVisible` before the tap/assert |
-| Screen still loading (spinner visible) | Add `extendedWaitUntil` for post-loading content |
-| Text not found | Update selector to match current accessibility text |
-| New modal/sheet | Add optional dismiss: `tapOn: text: "Got it", optional: true` |
-| Element ID renamed | Update `id` to match current hierarchy |
-| Navigation path changed | Add/update tap steps for new intermediate screens |
-| Conditional skipped needed step | Set env var or make step unconditional |
+| MCP command works but test failed (timing)           | Add `extendedWaitUntil` before the step (default timeout: 5000ms)       |
+| Element below the fold / off-screen                  | Add `scrollUntilVisible` before the tap/assert                          |
+| Screen still loading (spinner visible)               | Add `extendedWaitUntil` for post-loading content                        |
+| Text not found                                       | Update selector to match current accessibility text                     |
+| New modal/sheet                                      | Add optional dismiss: `tapOn: text: "Got it", optional: true`           |
+| Element ID renamed                                   | Update `id` to match current hierarchy                                  |
+| Navigation path changed                              | Add/update tap steps for new intermediate screens                       |
+| Conditional skipped needed step                      | Set env var or make step unconditional                                  |
 
 ### 3b. Run remaining steps via MCP
 
