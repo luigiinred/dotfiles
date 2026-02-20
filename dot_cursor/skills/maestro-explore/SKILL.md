@@ -13,6 +13,47 @@ Find a target page, screen, or component in the live app by iteratively inspecti
 - Get the device ID via `user-maestro-list_devices`
 - If no device is running, start one with `user-maestro-start_device`
 
+## MCP Tool Usage Rules
+
+**CRITICAL: Understand the two flow execution tools and when to use each.**
+
+### `run_flow` — inline ad-hoc commands only
+
+Use for single commands or short sequences that don't reference external files. The YAML is written to a temp file, so `runFlow: file:` references with relative paths **will break**.
+
+```yaml
+# GOOD — inline commands
+- tapOn:
+    id: portfolio-screen-tab
+
+# GOOD — multiple inline commands
+- tapOn: "Change portfolio"
+- waitForAnimationToEnd
+- assertVisible: "All Portfolios"
+
+# BAD — file references break because temp file is in /tmp
+- runFlow:
+    file: ../../utils/login.yml
+```
+
+### `run_flow_files` — run existing .yml flow files
+
+Use when you need to run an existing flow file (login, startApp, etc.) that lives in the workspace. Pass the **workspace-relative path**.
+
+```
+run_flow_files(device_id, flow_files="maestro/flows/portfolio/changePortfolioSingleDefcon.yml")
+```
+
+You can also pass env vars via the `env` parameter.
+
+### Summary
+
+| Need | Tool | Example |
+|------|------|---------|
+| Run a saved flow file | `run_flow_files` | Login flow, existing test |
+| Tap / scroll / assert on live device | `run_flow` | `- tapOn: "Settings"` |
+| Navigate with file + inline steps | `run_flow_files` first, then `run_flow` for subsequent steps | Login via file, then tap around inline |
+
 ## Step 1: Gather Target
 
 Collect from the user (use AskQuestion when available):
@@ -39,7 +80,7 @@ If a flow already navigates to the target, read it to extract the path. This can
 Grep: "<target keywords>" in src/
 ```
 
-Look for screen names, navigation routes, tab labels, or accessibility IDs that match the target. This gives hints about where the target lives in the nav hierarchy.
+Look for screen names, navigation routes, tab labels, or accessibility IDs that match the target.
 
 ### 2c. Build initial hypothesis
 
@@ -54,16 +95,28 @@ If research gives a clear path, skip directly to Step 3b and execute it. If unce
 
 ### 3a. Bootstrap — Login and land on dashboard
 
-Use `user-maestro-run_flow` to launch and log in:
+If an existing flow gets you to the right starting point, use `run_flow_files`:
+
+```
+run_flow_files(device_id, flow_files="maestro/flows/_temp_explore.yml")
+```
+
+Or write a temp flow file in `maestro/flows/_temp_explore.yml` with the login + initial navigation, then run it. This avoids the relative-path problem.
+
+If you just need to login, you can also create a minimal temp file:
 
 ```yaml
 appId: com.guideline.mobile
+tags:
+  - ignore
 ---
 - runFlow:
-    file: maestro/utils/login.yml
+    file: ../utils/login.yml
     env:
-      USERNAME: <appropriate test user>
+      USERNAME: single-defcon@guideline.test
 ```
+
+**Path depth matters:** flows in `maestro/flows/` use `../utils/`, flows in `maestro/flows/subdir/` use `../../utils/`.
 
 Default users (choose based on target):
 - `single-defcon@guideline.test` — single 401k account
@@ -89,8 +142,8 @@ Loop until the target is found or you've exhausted reasonable paths.
 
 Scan the hierarchy for:
 - **Target found?** — If the target text, component, or element is visible, you're done. Go to Step 4.
-- **Clue elements** — Buttons, tabs, or list items that might lead toward the target (e.g., if looking for "Statements", tapping "Profile" tab is a reasonable step)
-- **Scrollable content** — If the screen might have the target below the fold, scroll first before navigating away
+- **Clue elements** — Buttons, tabs, or list items that might lead toward the target
+- **Scrollable content** — If the screen might have the target below the fold, scroll first
 
 Decision priority:
 1. Tap an element that exactly or partially matches the target
@@ -100,21 +153,20 @@ Decision priority:
 
 **Act:**
 
-Execute the chosen action via `user-maestro-run_flow`:
+Execute via `run_flow` with inline commands (no file references):
 
 ```yaml
-appId: com.guideline.mobile
----
 - tapOn:
-    id: <element-id>
+    id: profile-screen-tab
 ```
 
-Or for scrolling:
+```yaml
+- scroll
+```
 
 ```yaml
-appId: com.guideline.mobile
----
-- scroll
+- tapOn: "Statements"
+- waitForAnimationToEnd
 ```
 
 **Log the step** — append to the navigation log:
@@ -128,7 +180,7 @@ appId: com.guideline.mobile
 **Check:**
 
 After acting, inspect again to see the new state. If you navigated to a dead end:
-- Use `user-maestro-back` or tap a back button to return
+- Use `user-maestro-back` or `run_flow` with `- back` to return
 - Remove the dead-end step from the log
 - Try the next most likely path
 
@@ -136,7 +188,7 @@ After acting, inspect again to see the new state. If you navigated to a dead end
 
 If a path doesn't lead to the target:
 
-1. Go back: `user-maestro-run_flow` with `- back` or tap the back/close button
+1. Go back via `run_flow`: `- back` or tap back/close button inline
 2. Log the backtrack (but don't include dead ends in the final output)
 3. Try the next candidate from the previous screen
 
@@ -174,8 +226,10 @@ From the dashboard, it takes 3 taps to reach this screen.
 | Issue | Solution |
 |-------|----------|
 | Can't find device | `user-maestro-list_devices` then `user-maestro-start_device` |
+| `run_flow` fails with "Flow file does not exist" | You used `runFlow: file:` inside `run_flow`. Use `run_flow_files` for file-based flows, or inline the commands directly |
+| `run_flow` fails with "Failed to connect" | Maestro driver not running. Run any `maestro test` command via Shell to bootstrap it, or use `launch_app` first |
 | Login fails | Check env vars, try a different test user |
 | Target might be behind a feature flag | Ask the user about account requirements |
 | Target only appears on certain account types | Try different test users |
-| Screen loads but is empty | Wait with `extendedWaitUntil` or `waitForAnimationToEnd` |
+| Screen loads but is empty | Add `- waitForAnimationToEnd` before inspecting |
 | Back button doesn't work | Try `user-maestro-back` (Android) or tap the back chevron by ID |
