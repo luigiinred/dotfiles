@@ -1,11 +1,20 @@
 ---
 name: sync-dotfiles
-description: Sync Cursor skills, agents, rules, and other dotfiles to chezmoi after changes. Use automatically after creating, editing, or deleting files in ~/.cursor/skills/, ~/.cursor/agents/, or ~/.cursor/rules/, or when the user asks to sync dotfiles, update chezmoi, or push dotfiles.
+description: Sync Cursor skills, agents, rules, and other dotfiles to chezmoi. Use when the user asks to update dotfiles (pull + apply), sync dotfiles, update chezmoi, or push dotfiles; or automatically after creating, editing, or deleting files in ~/.cursor/skills/, ~/.cursor/agents/, or ~/.cursor/rules/.
 ---
 
 # Sync Dotfiles to chezmoi
 
-After any change to managed dotfiles, sync them to chezmoi and push.
+**Reference:** See [chezmoi-docs.md](./chezmoi-docs.md) in this skill for command reference.
+
+Choose the right flow from user intent:
+
+## Update vs sync
+
+| User says… | Meaning | Do this |
+|------------|--------|--------|
+| **Update dotfiles**, pull dotfiles, get latest dotfiles | Fetch from remote and apply | Run **`chezmoi update`** (see [chezmoi-docs.md](./chezmoi-docs.md)). Done. |
+| **Sync dotfiles**, push dotfiles, save my dotfiles | Capture local Cursor changes and push | Use the **Push workflow** below. |
 
 ## Trigger Conditions
 
@@ -14,9 +23,11 @@ Run this skill **automatically** (without being asked) whenever you have just:
 - Created, edited, or deleted a file in `~/.cursor/agents/`
 - Created, edited, or deleted a file in `~/.cursor/rules/`
 
-Also run when the user explicitly asks to sync or push dotfiles.
+Also run when the user explicitly asks to **update** dotfiles, **sync** dotfiles, **push** dotfiles, or update chezmoi.
 
-## Workflow
+## Push workflow (sync / push dotfiles)
+
+When the user wants to save local Cursor changes to the dotfiles repo:
 
 1. **Capture local changes first**
 
