@@ -1,47 +1,48 @@
 ---
 name: maestro-debug-test
-description: Debug and fix a failing Maestro E2E test in a diagnose-fix-rerun loop. Analyzes the failure screenshot, failed step, and device view hierarchy via Maestro MCP, applies a fix, and re-runs until the test passes. Use when a Maestro test just failed, the user says "debug this test", "why did this fail", or wants to fix a Maestro test failure.
+description: Run a Maestro E2E test, and if it fails, diagnose and fix it in a loop until it passes. Analyzes failure screenshots, failed steps, and device view hierarchy via Maestro MCP to determine root cause, applies fixes, and re-runs. Use when the user says "debug this test", "fix this maestro test", "why is this test failing", or wants to get a Maestro test passing.
 ---
 
-# Debug Maestro Test Failure
+# Debug Maestro Test
 
-Diagnose a Maestro test failure, apply a fix, and re-run in a loop until the test passes.
+Run a Maestro test and, if it fails, enter a diagnose-fix-rerun loop until it passes.
 
-## Prerequisites
+The user provides a path to a `.yml` flow file. If relative, resolve from workspace root.
 
-- A Maestro test was already run and **failed** (e.g. via `maestro-run-test` skill or manual run)
-- The device/simulator is still running with the app at the failure point
-- Results are in `build/maestro-results/` (or the user provides an alternate path)
+## Step 1: Run the test
 
-## Workflow
-
-Repeat the **Diagnose → Fix → Re-run** loop until the test passes (or you determine the issue is in the app, not the test).
-
-### Step 1: Diagnose
-
-#### 1a. Locate failure artifacts
-
-Find the most recent results directory and its contents:
+Verify the path exists, clean previous results, and run:
 
 ```bash
-ls -la build/maestro-results/
+ls <resolved-path>
+rm -rf build/maestro-results
+maestro test --test-output-dir=build/maestro-results <resolved-path>
+```
+
+If the user specifies extra flags (e.g. `--include-tags`, `--device`), append them.
+
+- **Exit code 0** → All tests passed. Report success and stop.
+- **Non-zero** → Test failed. Continue to Step 2.
+
+## Step 2: Diagnose
+
+#### 2a. Locate failure artifacts
+
+```bash
 ls -la build/maestro-results/$(ls -t build/maestro-results/ | head -1)/
 ```
 
-Look for:
-- `screenshot-❌-*.png` — failure screenshot
-- `commands-*.json` — full command execution log
-- `ai-*.json` / `ai-report-*.html` — AI-generated summary (if present)
+Look for: `screenshot-❌-*.png`, `commands-*.json`, `ai-*.json`
 
-#### 1b. Read the failure screenshot
+#### 2b. Read the failure screenshot
 
-Use the Read tool on the `screenshot-❌-*.png` file to see the visual state at failure time. Note what screen is displayed, any error messages, loading states, or unexpected UI.
+Use the Read tool on `screenshot-❌-*.png` to see visual state at failure time.
 
-#### 1c. Read the test flow
+#### 2c. Read the test flow
 
-Read the `.yml` test file that failed and all sub-flows it references (`runFlow` entries). Identify the **failed step** from the test output — the command and selector that could not be resolved.
+Read the `.yml` file and all sub-flows it references (`runFlow` entries). Identify the **failed step** from the test output.
 
-#### 1d. Inspect the live device
+#### 2d. Inspect the live device
 
 The device is frozen at the failure point. Use **both** Maestro MCP tools:
 
@@ -53,7 +54,7 @@ Search the hierarchy for:
 - Similar elements with slightly different text, IDs, or casing
 - Whether the expected element exists but is off-screen or hidden
 
-#### 1e. Compare expected vs actual
+#### 2e. Compare expected vs actual
 
 | | Expected (from test YAML) | Actual (from device) |
 |---|---|---|
@@ -61,7 +62,7 @@ Search the hierarchy for:
 | **Element** | What text/ID is the test looking for? | Is it present? Under a different name? |
 | **State** | What state should the app be in? | Is it loading, showing an error, or on a different screen? |
 
-#### 1f. Determine root cause
+#### 2f. Determine root cause
 
 | Category | Symptoms | How to confirm |
 |----------|----------|----------------|
@@ -73,14 +74,13 @@ Search the hierarchy for:
 | **Conditional flow** | A `when` guard skipped a required step | Check env vars and conditional logic |
 | **New modal/sheet** | Overlay blocking interaction | Screenshot/hierarchy show modal |
 
-### Step 2: Fix
+## Step 3: Fix
 
 Apply the **minimal change** to the test YAML to resolve the failure:
 
 - Only change what's needed to fix the current failure
 - Preserve headers (appId, env, tags) and existing comments
 - Match existing patterns in the file
-- If a conditional flow (`when: ${VAR == true}`) skips a step the app now always requires, make it unconditional
 
 Common fixes:
 
@@ -94,21 +94,19 @@ Common fixes:
 | Navigation path changed | Add/update tap steps for new intermediate screens |
 | Conditional skipped needed step | Set env var or make step unconditional |
 
-### Step 3: Re-run
+## Step 4: Re-run and evaluate
 
-Clean results and re-run the test:
+Clean results and re-run:
 
 ```bash
 rm -rf build/maestro-results
-maestro test --test-output-dir=build/maestro-results <path-to-test.yml>
+maestro test --test-output-dir=build/maestro-results <resolved-path>
 ```
 
-### Step 4: Evaluate
-
 - **Test passed** → Report the fix summary and stop.
-- **Test failed on a new step** → Go back to Step 1 with the new failure.
+- **Test failed on a new step** → Go back to Step 2 with the new failure.
 - **Same step fails again** → Re-diagnose; the fix was insufficient. Try a different approach.
-- **3+ failed attempts on the same step** → Stop and report the issue to the user. It may be an app bug rather than a test issue.
+- **3+ failed attempts on the same step** → Stop and report. It may be an app bug, not a test issue.
 
 ## Reporting
 
