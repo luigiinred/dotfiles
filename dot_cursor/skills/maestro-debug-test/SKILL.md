@@ -111,8 +111,8 @@ Common fixes:
 
 | Symptom | Fix |
 |---------|-----|
-| Element on screen but test couldn't find it (timing) | Add `extendedWaitUntil` with visible selector and generous timeout |
-| MCP command works but test failed (timing) | Add `extendedWaitUntil` before the step |
+| Element on screen but test couldn't find it (timing) | Add `extendedWaitUntil` with visible selector (default timeout: 5000ms) |
+| MCP command works but test failed (timing) | Add `extendedWaitUntil` before the step (default timeout: 5000ms) |
 | Element below the fold / off-screen | Add `scrollUntilVisible` before the tap/assert |
 | Screen still loading (spinner visible) | Add `extendedWaitUntil` for post-loading content |
 | Text not found | Update selector to match current accessibility text |
