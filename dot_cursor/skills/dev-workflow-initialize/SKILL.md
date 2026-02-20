@@ -1,11 +1,11 @@
 ---
 name: dev-workflow-initialize
-description: Start working on a Jira ticket by fetching details and creating a git branch in a new worktree. Use when the user wants to start a ticket, begin work on a Jira issue, or create a branch for a ticket. For unticketed work, use placeholder RETIRE-1908.
+description: Start working on a Jira ticket or GitHub issue by fetching details and creating a git branch in a new worktree. Use when the user wants to start a ticket, begin work on a Jira issue, a GitHub issue, or create a branch. For unticketed work, use placeholder RETIRE-1908.
 ---
 
-# Start Ticket
+# Start Ticket or Issue
 
-Start working on a Jira ticket by fetching its details and creating a feature branch in a new worktree based on origin/main.
+Start working on a Jira ticket or GitHub issue by fetching its details and creating a feature branch in a new worktree based on origin/main. Requirements can come from **Jira** (e.g. RETIRE-123), **GitHub** (e.g. owner/repo#1 or issue URL), or **unticketed** (placeholder RETIRE-1908). For source rules and branch naming see [sources.md](sources.md).
 
 ## Placeholder Ticket (Unticketed Work)
 
@@ -17,50 +17,38 @@ If the user says they’re working on something without a ticket, unticketed wor
 
 ## Workflow
 
-### Step 1: Get Ticket Number
+### Step 1: Get Ticket or Issue
 
-If the user hasn't provided a ticket number, **ALWAYS use the AskQuestion tool:**
+If the user hasn't provided a ticket or issue, **ALWAYS use the AskQuestion tool:**
 
-- Title: "Which Ticket?"
-- Question: "What Jira ticket would you like to start?"
+- Title: "Which Ticket or Issue?"
+- Question: "What would you like to start from?"
 - Options:
-  - id: "ticket", label: "Specify a ticket number (e.g., RETIRE-123)"
+  - id: "jira", label: "Jira ticket (e.g., RETIRE-123)"
+  - id: "github", label: "GitHub issue (URL or owner/repo#N)"
   - id: "unticketed", label: "Unticketed work (use RETIRE-1908)"
 
 Based on the response:
 
-- "ticket" → Ask conversationally for the ticket number
-- "unticketed" → Use **RETIRE-1908** as the ticket and optionally ask for a brief description to generate the branch name
+- "jira" → Ask for the Jira ticket number (e.g. RETIRE-123)
+- "github" → Ask for the GitHub issue URL or owner/repo#N (or #N if current repo)
+- "unticketed" → Use **RETIRE-1908** and optionally ask for a brief description for the branch name
 
-### Step 2: Fetch Ticket Details
+If the user already provided a GitHub issue URL or owner/repo#N, treat as GitHub and parse it; no need to ask.
 
-Use the `jira-expert` subagent to fetch the ticket:
+### Step 2: Fetch Details
 
-```
-Use the jira-expert subagent to fetch issue [TICKET_NUMBER]
-```
+**Jira:** Use the `jira-expert` subagent to fetch the ticket by key. Present: key, type, status, priority; summary; description (condensed); sprint/epic if available.
 
-Present a summary of:
-
-- Ticket key, type, status, priority
-- Summary/title
-- Description (condensed)
-- Sprint and epic info if available
+**GitHub:** Fetch the issue: from URL parse owner/repo and number, then `gh issue view N --repo owner/repo --json title,body,state,number`; or for #N in current repo use `gh issue view N --json title,body,state,number`. If `gh` fails or is unavailable, try `mcp_web_fetch` with the issue URL (public repos only). Present: number, title, state; body (condensed).
 
 ### Step 3: Generate Branch Name
 
-Generate a kebab-case summary from the ticket title:
+Generate a kebab-case summary from the title/summary (lowercase, spaces/special chars → hyphens, no consecutive hyphens, 3-5 words).
 
-1. Take the ticket summary/title
-2. Convert to lowercase
-3. Replace spaces and special characters with hyphens
-4. Remove consecutive hyphens
-5. Keep it concise (3-5 words max)
-
-Branch name format: `[TICKET_NUMBER]-[kebab-case-summary]`
-
-Example: For ticket RETIRE-123 with summary "Add User Authentication Flow"
-→ `RETIRE-123-add-user-authentication`
+- **Jira:** `[TICKET_KEY]-[kebab-case-summary]` (e.g. RETIRE-123-add-user-authentication)
+- **GitHub:** `issue-[N]-[kebab-case-summary]` (e.g. issue-1-add-auth-flow)
+- **Unticketed:** `RETIRE-1908-[kebab-case-summary]`
 
 ### Step 4: Determine Worktree Paths
 
@@ -134,7 +122,7 @@ Monitor progress - this takes several minutes.
 ### Step 10: Report Success
 
 ```
-Started ticket [TICKET_NUMBER]: "[Summary]"
+Started [TICKET_OR_ISSUE_REF]: "[Summary]"
 
 Worktree created!
 Branch: [BRANCH_NAME]
@@ -178,7 +166,7 @@ Based on the response:
 
 ## Error Handling
 
-- **Ticket not found**: Report the error and ask for a valid ticket number
+- **Ticket or issue not found**: Report the error and ask for a valid Jira key or GitHub issue URL/number
 - **Branch exists**: Ask if user wants to switch to existing worktree or create with suffix
 - **Worktree exists**: Ask to remove/recreate or use existing
 - **Missing .env in main worktree**: Warn user that .env is missing from main worktree and must be created manually

@@ -1,144 +1,142 @@
 ---
 name: worktree-manager
-description: Create and configure git worktrees for parallel development. Use when the user wants to start a new worktree, work on multiple branches simultaneously, set up an isolated development environment, or mentions worktree.
+description: Configure Cursor's built-in worktree setup and cleanup for parallel agents. Use when the user wants to customize worktree setup (deps, .env), adjust cleanup limits, inspect worktrees, or mentions worktree or parallel agents.
 ---
 
 # Worktree Manager
 
-Create fully configured git worktrees for parallel development.
+Configure Cursor's **built-in worktree handling** for parallel agents. Cursor automatically creates worktrees when you run parallel agents (or Best-of-N); this skill helps you set up those worktrees and manage cleanup.
+
+**Docs:** [Cursor – Parallel Agents / Worktrees](https://cursor.com/docs/configuration/worktrees)
+
+## How Cursor Uses Worktrees
+
+- **Automatic creation:** Running a parallel agent creates a worktree under `~/.cursor/worktrees/<repo>/<id>` (1:1 agent-to-worktree).
+- **Apply:** When the agent finishes, use **Apply** to merge the worktree changes back into your primary branch.
+- **No manual `git worktree add`:** Prefer Cursor's UI for parallel work; use this skill to configure *how* those worktrees are set up and cleaned up.
 
 ## Workflow
 
-### Step 1: Get Branch Name
+### 1. Configure Worktree Setup (Optional)
 
-If not provided, **ALWAYS use the AskQuestion tool:**
+When the user wants worktrees to install deps, copy `.env`, or run migrations when Cursor creates them:
 
-- Title: "Branch Name Required"
-- Question: "What branch name should I use for this worktree?"
-- Options:
-  - id: "specify", label: "Let me specify a branch name"
-  - id: "abort", label: "Abort"
+**Create or edit `.cursor/worktrees.json`** in the **project root** (repo root). Cursor looks there first, then in the worktree path.
 
-If the user selects "specify", ask conversationally for the branch name (e.g., RETIRE-1234).
+**Supported keys:**
 
-### Step 2: Determine Paths
+| Key | Use |
+|-----|-----|
+| `setup-worktree` | Commands or script path; fallback for all OSes |
+| `setup-worktree-unix` | macOS/Linux; overrides `setup-worktree` on Unix |
+| `setup-worktree-windows` | Windows; overrides `setup-worktree` on Windows |
 
-- `[MAIN_WORKTREE]` = current workspace root (e.g., `/Users/timmy.garrabrant/Developer/mobile-app`)
-- `[PROJECT_NAME]` = basename of main worktree (e.g., `mobile-app`)
-- `[NEW_WORKTREE]` = `../[PROJECT_NAME]-[BRANCH_NAME]`
+Each key accepts:
 
-### Step 3: Check Prerequisites
+- **Array of shell commands** — run in order in the worktree
+- **String** — path to a script file relative to `.cursor/` (e.g. `"setup-worktree-unix.sh"`)
+
+**Environment:** In setup commands/scripts, `$ROOT_WORKTREE_PATH` (Unix) or `%ROOT_WORKTREE_PATH%` (Windows) is the path of the primary (main) worktree so you can copy files from it.
+
+**Example – Node with .env:**
+
+```json
+{
+  "setup-worktree": [
+    "npm ci",
+    "cp $ROOT_WORKTREE_PATH/.env .env"
+  ]
+}
+```
+
+**Example – OS-specific (Unix copy .env, Windows copy .env):**
+
+```json
+{
+  "setup-worktree-unix": [
+    "npm ci",
+    "cp $ROOT_WORKTREE_PATH/.env .env",
+    "chmod +x scripts/*.sh"
+  ],
+  "setup-worktree-windows": [
+    "npm ci",
+    "copy %ROOT_WORKTREE_PATH%\\.env .env"
+  ]
+}
+```
+
+**Example – Script file (complex setup):**
+
+```json
+{
+  "setup-worktree-unix": "setup-worktree-unix.sh",
+  "setup-worktree-windows": "setup-worktree-windows.ps1",
+  "setup-worktree": ["echo 'Define setup-worktree-unix or setup-worktree-windows for this OS.'"]
+}
+```
+
+Put scripts in `.cursor/` next to `worktrees.json`. Use fast package managers (e.g. `bun`, `pnpm`, `uv`) when possible; avoid symlinking dependencies into the worktree.
+
+**Debugging:** Output → "Worktrees Setup" in the bottom panel.
+
+### 2. Configure Cleanup (Optional)
+
+Cursor cleans up worktrees automatically. When the user wants to change limits or frequency:
+
+**Settings (Cursor 2.1+):**
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `cursor.worktreeMaxCount` | 20 | Max worktrees per workspace; oldest (by last access) removed when exceeded |
+| `cursor.worktreeCleanupIntervalHours` | (schedule) | How often cleanup runs |
+
+Add to user `settings.json` (or project):
+
+```json
+{
+  "cursor.worktreeMaxCount": 20,
+  "cursor.worktreeCleanupIntervalHours": 6
+}
+```
+
+Cleanup is per-workspace; other repos are not affected.
+
+### 3. Inspect Worktrees
+
+When the user wants to see Cursor’s worktrees:
 
 ```bash
-# Check for existing branch
-git branch --list [BRANCH_NAME]
-
-# Check for existing worktree
-git worktree list | grep [BRANCH_NAME]
+git worktree list
 ```
 
-If exists, **ALWAYS use the AskQuestion tool:**
+Cursor’s worktrees appear under `~/.cursor/worktrees/<repo>/<id>` with branch names like `feat-1-98Zlw`.
 
-- Title: "Branch/Worktree Already Exists"
-- Question: "A branch or worktree named [BRANCH_NAME] already exists. How would you like to proceed?"
-- Options:
-  - id: "use", label: "Use existing branch"
-  - id: "suffix", label: "Create with suffix (e.g., [BRANCH_NAME]-2)"
-  - id: "abort", label: "Abort"
+**SCM pane:** Enable `git.showCursorWorktrees` to show Cursor worktrees in the Source Control view.
 
-Based on the response:
+### 4. Manual Worktrees (Outside Cursor)
 
-- "use" → Use existing branch if worktree doesn't exist, or navigate to existing worktree
-- "suffix" → Create new branch/worktree with numeric suffix
-- "abort" → Stop the workflow
+If the user explicitly wants a **manual** worktree (e.g. long-lived branch in a separate folder, not for parallel agents):
 
-### Step 4: Create Worktree
+- Use standard git: `git worktree add <path> [-b <branch>] <start-point>`.
+- Do **not** create it inside `~/.cursor/worktrees/` (that’s for Cursor-managed worktrees).
+- Optionally reuse the same setup logic by running equivalent commands (e.g. `npm ci`, `cp $MAIN/.env .env`) in the new worktree path.
 
-**For a NEW branch (based on origin/main):**
+## When to Use This Skill
 
-```bash
-git fetch origin main
-git worktree add [NEW_WORKTREE] -b [BRANCH_NAME] origin/main
-```
-
-**For an EXISTING branch:**
-
-```bash
-# Fetch the branch if it's remote-only
-git fetch origin [BRANCH_NAME]
-
-# Create worktree using existing branch (no -b flag)
-git worktree add [NEW_WORKTREE] [BRANCH_NAME]
-```
-
-If unclear whether they want a new branch or to use an existing one, **ALWAYS use the AskQuestion tool:**
-
-- Title: "New or Existing Branch?"
-- Question: "Would you like to create a new branch or use an existing one?"
-- Options:
-  - id: "new", label: "Create new branch"
-  - id: "existing", label: "Use existing branch"
-
-Based on the response, use the appropriate workflow above.
-
-### Step 5: Copy Required Files
-
-Copy .env from the main worktree (not .env.example):
-
-```bash
-cp [MAIN_WORKTREE]/.env [NEW_WORKTREE]/.env
-```
-
-### Step 6: Install Dependencies
-
-```bash
-cd [NEW_WORKTREE]
-npm install
-```
-
-Monitor progress - this takes several minutes.
-
-### Step 7: Report Success
-
-```
-Worktree created!
-
-Branch: [BRANCH_NAME]
-Location: [NEW_WORKTREE]
-Based on: origin/main
-
-Files copied: .env
-Dependencies: installed
-```
-
-### Step 8: Open in Cursor
-
-**ALWAYS use the AskQuestion tool:**
-
-- Title: "Open in Cursor?"
-- Question: "Worktree created successfully at [NEW_WORKTREE]. Would you like me to open it in a new Cursor window?"
-- Options:
-  - id: "open", label: "Yes, open it"
-  - id: "skip", label: "No, I'll open it manually"
-
-Based on the response:
-
-- "open" → Run `cursor [NEW_WORKTREE]`
-- "skip" → End the workflow
-
-## Cleanup
-
-```bash
-# Remove worktree
-git worktree remove [NEW_WORKTREE]
-
-# Delete branch if merged
-git branch -d [BRANCH_NAME]
-```
+- User wants to **customize worktree setup** (deps, .env, migrations) when running parallel agents.
+- User asks about **worktree cleanup**, limits, or where Cursor stores worktrees.
+- User wants to **see or manage** Cursor-created worktrees (`git worktree list`, SCM setting).
+- User mentions **worktree** or **parallel agents** and needs guidance.
 
 ## Error Handling
 
-- **Branch exists**: Ask to use existing or create with suffix
-- **Worktree exists**: Ask to remove/recreate or use existing
-- **Missing .env in main worktree**: Warn user that .env is missing from main worktree and must be created manually
-- **npm install fails**: Show error, suggest `rm -rf node_modules && npm install`
+- **Missing `.env` in main worktree:** If setup copies `.env` from `$ROOT_WORKTREE_PATH`, warn that `.env` must exist in the primary worktree or setup will fail.
+- **Setup script fails:** Point user to Output → "Worktrees Setup" and suggest fixing the commands/script (e.g. path to `.env`, package manager).
+
+---
+
+The following cursor rule files are relevant to the files you have open:
+
+- /Users/timmygarrabrant/.cursor/rules/auto-sync-dotfiles.mdc
+
+After creating, editing, or deleting any file matching these globs, you MUST run the **sync-dotfiles** skill to sync changes to chezmoi. Read the skill at `~/.cursor/skills/sync-dotfiles/SKILL.md` and follow its workflow.

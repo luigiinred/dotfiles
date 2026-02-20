@@ -27,51 +27,44 @@ Also run when the user explicitly asks to **update** dotfiles, **sync** dotfiles
 
 ## Push workflow (sync / push dotfiles)
 
-When the user wants to save local Cursor changes to the dotfiles repo:
+When the user wants to save local Cursor changes to the dotfiles repo, use **chezmoi only** (no raw `git` or `cd` to source). All git runs via `chezmoi git` in the source directory.
 
-1. **Capture local changes first**
+1. **Capture local changes**
 
    ```bash
    chezmoi re-add ~/.cursor/skills ~/.cursor/agents ~/.cursor/rules
    ```
 
-   If only skills changed, scope to just that path. Adjust as needed.
+   If only skills changed, scope to that path. For new untracked files use `chezmoi add PATH`.
 
-2. **Commit local changes**
-
-   ```bash
-   cd ~/.local/share/chezmoi && git add -A
-   ```
-
-   Check if there's anything to commit:
+2. **Stage and commit**
 
    ```bash
-   git diff --cached --quiet || git commit -m "chore: sync cursor config"
+   chezmoi git add -A
+   chezmoi git -- diff --cached --quiet || chezmoi git -- commit -m "chore: sync cursor config"
    ```
 
-3. **Pull remote changes and rebase**
+   Use a more specific message when clear (e.g. `chore: add new skill foo-bar`). Put `--` before git flags so chezmoi doesn’t interpret them.
+
+3. **Pull remote and rebase**
 
    ```bash
-   cd ~/.local/share/chezmoi && git pull --rebase
+   chezmoi git -- pull --rebase
    ```
 
-   Local changes are already committed, so they rebase cleanly on top of remote additions. Both sides are preserved.
+   Local changes are already committed, so rebase keeps both sides.
 
-4. **Apply merged state locally**
+4. **Apply merged state**
 
    ```bash
    chezmoi apply
    ```
 
-   This writes the combined result (local edits + remote additions) back to the filesystem.
-
 5. **Push**
 
    ```bash
-   cd ~/.local/share/chezmoi && git push
+   chezmoi git push
    ```
-
-   Use a more specific commit message in step 2 when the change is clear (e.g. `chore: add new skill foo-bar`).
 
 ## Notes
 

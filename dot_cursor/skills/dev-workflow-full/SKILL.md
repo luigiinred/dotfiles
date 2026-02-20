@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-full
-description: Run the full ticket lifecycle end-to-end without manually triggering each step. Chains initialize, start-work, prepare-commit, create-pr, and review-pr in sequence. Supports autopilot (no prompts) or pair (interactive) mode. Use when the user says "full workflow", "end to end", "run the whole thing", or wants to go from ticket to reviewed PR in one go.
+description: Run the full ticket lifecycle end-to-end (Jira or GitHub issue). Chains initialize, start-work, prepare-commit, create-pr, and review-pr. Supports autopilot or pair mode. Use when the user says "full workflow", "end to end", or wants to go from ticket/issue to reviewed PR in one go.
 ---
 
 # Full Dev Workflow
@@ -35,14 +35,15 @@ dev-workflow-review-pr
 
 Gather all required inputs in a **single AskQuestion call** before doing any work:
 
-- id: "ticket", prompt: "Which Jira ticket?", options:
-  - id: "specify", label: "I'll provide a ticket number"
+- id: "source", prompt: "What are you working from?", options:
+  - id: "jira", label: "Jira ticket (e.g. RETIRE-123)"
+  - id: "github", label: "GitHub issue (URL or owner/repo#N)"
   - id: "unticketed", label: "Unticketed work (use RETIRE-1908)"
 - id: "open_cursor", prompt: "Open the new worktree in Cursor?", options:
   - id: "yes", label: "Yes, open in Cursor"
   - id: "no", label: "No, stay here"
 
-If "specify", ask conversationally for the ticket number.
+If "jira" or "github", ask conversationally for the ticket number or issue URL/ref. Then run initialize with that source (see dev-workflow-initialize for Jira vs GitHub).
 
 **Autopilot defaults** (applied automatically, no prompts):
 
@@ -67,7 +68,7 @@ Each sub-skill runs with its full interactive prompts. The user confirms at ever
 
 Use the `dev-workflow-initialize` skill to create the branch and worktree.
 
-- **Autopilot**: Use the ticket number collected in Step 0. Skip the "Which Ticket?" prompt. Auto-generate branch name. Skip "Open in Cursor?" (use collected answer). Skip "Start Implementation?" (always yes).
+- **Autopilot**: Use the ticket or issue collected in Step 0 (Jira key, GitHub issue URL/ref, or unticketed). Skip the "Which Ticket or Issue?" prompt. Auto-generate branch name per source type. Skip "Open in Cursor?" (use collected answer). Skip "Start Implementation?" (always yes).
 - **Pair**: All prompts go to the user as normal.
 
 ## Step 2: Start Work
@@ -105,7 +106,7 @@ Report the final status:
 Full workflow complete!
 
 Mode: [Autopilot / Pair]
-Ticket: [TICKET-ID]
+Ticket/Issue: [TICKET-ID or issue ref]
 Branch: [BRANCH-NAME]
 Worktree: [PATH]
 Commits: [N] atomic commits

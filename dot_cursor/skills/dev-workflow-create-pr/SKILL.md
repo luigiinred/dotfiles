@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-create-pr
-description: Create a GitHub pull request using the gh CLI. Analyzes all changes from main, generates a description following the PR template (jira, what, why, who), and creates the PR if one doesn't exist. Use when the user asks to create a PR, open a pull request, or submit changes for review.
+description: Create a GitHub pull request using the gh CLI. Analyzes changes from base branch, generates a description following the PR template (jira or GitHub issue, what, why, who), and creates the PR if one doesn't exist. Use when the user asks to create a PR, open a pull request, or submit changes for review.
 ---
 
 # Create Pull Request
@@ -88,28 +88,31 @@ git diff main...HEAD --stat
 
 Generate the PR description directly from the diff gathered in Step 3.
 
-**4a. Extract Jira ticket** from the branch name using pattern `[A-Z]+-\d+` (e.g., RNDCORE-12345).
+**4a. Extract ticket or issue** from the branch name:
 
-- If not found, **ALWAYS use the AskQuestion tool:**
-  - Title: "JIRA Ticket"
-  - Question: "What's the JIRA ticket for this PR?"
-  - Options:
-    - id: "specify", label: "Let me specify the ticket"
-    - id: "skip", label: "Skip (use placeholder)"
-  - If "specify": Ask conversationally for the ticket
-  - If "skip": use `RND***-xxxx`
+- **Jira:** Pattern `[A-Z]+-\d+` (e.g. RNDCORE-12345, RETIRE-456). Link: RETIRE → `https://gustohq.atlassian.net/browse/TICKET`; else `https://internal.guideline.tools/jira/browse/TICKET`.
+- **GitHub:** Pattern `issue-(\d+)` or leading `(\d+)-`. Link: `https://github.com/[owner]/[repo]/issues/N` (use current repo if not in branch).
 
-- **Link format:**
-  - If branch starts with `RETIRE`: use `https://gustohq.atlassian.net/browse/TICKET`
-  - Otherwise: use `https://internal.guideline.tools/jira/browse/TICKET`
+If neither found, **ALWAYS use the AskQuestion tool:** Title "Ticket or Issue", options: Jira (specify), GitHub (specify URL or #N), Skip (placeholder). If skip: use `RND***-xxxx` for jira or omit issue line.
 
-**4b. Analyze changes** from the diff -- understand what changed, why, and who it impacts.
+**4b. Analyze changes** from the diff — what changed, why, who it impacts.
 
-**4c. Generate the `[[[...]]]` block:**
+**4c. Generate the `[[[...]]]` block.** Use **either** jira **or** issue (not both):
 
+Jira:
 ```
 [[[
-**jira:** [TICKET-123](https://internal.guideline.tools/jira/browse/TICKET-123)
+**jira:** [TICKET-123](<jira-browse-url>)
+**what:** concise summary of changes
+**why:** business justification
+**who:** affected users/teams
+]]]
+```
+
+GitHub:
+```
+[[[
+**issue:** [#N](https://github.com/owner/repo/issues/N)
 **what:** concise summary of changes
 **why:** business justification
 **who:** affected users/teams
@@ -237,9 +240,9 @@ PR Creation Progress:
 
 ## Edge Cases
 
-### Branch has no Jira ticket
+### Branch has no Jira ticket or GitHub issue
 
-Use `N/A` or ask the user for the ticket ID.
+Use `N/A`, or ask the user for the Jira key or GitHub issue (URL or #N).
 
 ### Branch created from another feature branch (not main)
 

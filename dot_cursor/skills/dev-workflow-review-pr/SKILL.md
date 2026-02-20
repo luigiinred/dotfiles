@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-review-pr
-description: Review GitHub pull requests using the gh CLI. Fetches PR diff and details, analyzes changes for code quality, security, tests, and style, then posts inline comments. Use when the user asks to review a PR, check a pull request, or mentions a PR URL or number.
+description: Review GitHub pull requests using the gh CLI. Fetches PR diff and details, optional Jira or GitHub issue context from branch, analyzes for code quality, security, tests, and style, then posts inline comments. Use when the user asks to review a PR, check a pull request, or mentions a PR URL or number.
 ---
 
 # GitHub PR Review
@@ -45,31 +45,14 @@ gh pr diff <PR_NUMBER>
 gh api repos/{owner}/{repo}/pulls/<PR_NUMBER>/comments --jq '.[].body'
 ```
 
-### Step 3: Fetch Jira Ticket Context
+### Step 3: Fetch Ticket or Issue Context
 
-Extract the Jira ticket ID from the PR's head branch name (`headRefName` from Step 2).
+Extract the ticket or issue identifier from the PR's head branch name (`headRefName` from Step 2).
 
-Look for the pattern: `[A-Z]+-[0-9]+` (e.g., `RNDCORE-1234`, `RETIRE-5678`)
+- **Jira:** Pattern `[A-Z]+-[0-9]+` (e.g. RNDCORE-1234, RETIRE-5678). Fetch via Jira MCP (getJiraIssue) with fields summary, description, issuetype, acceptanceCriteria. Use to understand intent, verify the PR addresses requirements, and check acceptance criteria.
+- **GitHub:** Pattern `issue-(\d+)` or leading `(\d+)-` (e.g. issue-1, 1-add-feature). Fetch via `gh issue view N --repo owner/repo --json title,body,state,number` (use PR base repo if not in branch). Use title and body to understand intent and verify the PR addresses the issue.
 
-**If a ticket ID is found**, fetch the ticket details from Jira:
-
-```
-CallMcpTool:
-  server: "user-jira-confluencegusto"
-  toolName: "getJiraIssue"
-  arguments:
-    cloudId: "3fd33630-4e39-4689-ad04-db32e3843117"
-    issueIdOrKey: "<TICKET_ID>"
-    fields: ["summary", "description", "issuetype", "acceptanceCriteria"]
-```
-
-Use the ticket context to:
-
-- **Understand intent**: What problem is this PR solving?
-- **Verify completeness**: Does the PR address the ticket requirements?
-- **Check acceptance criteria**: Are all criteria met by the changes?
-
-**If no ticket pattern is found**: Skip this step and proceed to Step 4.
+**If no ticket/issue pattern is found**: Skip this step and proceed to Step 4.
 
 ### Step 4: Analyze Changes
 
@@ -181,11 +164,11 @@ Copy and track progress:
 ```
 PR Review Progress:
 - [ ] Fetched PR metadata and diff
-- [ ] Fetched Jira ticket context (if available)
+- [ ] Fetched Jira or GitHub issue context (if available)
 - [ ] Reviewed for code quality issues
 - [ ] Checked for security vulnerabilities
 - [ ] Verified test coverage
-- [ ] Verified PR addresses ticket requirements
+- [ ] Verified PR addresses ticket/issue requirements
 - [ ] Checked style consistency
 - [ ] Posted inline comments
 - [ ] Submitted review summary

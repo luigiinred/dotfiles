@@ -1,6 +1,6 @@
 # chezmoi reference (for sync-dotfiles skill)
 
-Quick reference for commands used by this skill. Full docs: <https://chezmoi.io>.
+Quick reference for every chezmoi command this skill uses. Each command below links to the official reference.
 
 ## Paths
 
@@ -13,6 +13,8 @@ Quick reference for commands used by this skill. Full docs: <https://chezmoi.io>
 
 ### `chezmoi update`
 
+**Reference:** <https://chezmoi.io/reference/commands/update/>
+
 **Use when:** User says "update dotfiles", "pull dotfiles", or wants the latest from remote.
 
 - Runs `git pull --autostash --rebase` in the source directory, then `chezmoi apply`.
@@ -23,9 +25,11 @@ Quick reference for commands used by this skill. Full docs: <https://chezmoi.io>
 chezmoi update
 ```
 
-Flags: `--apply` (default true), `--recurse-submodules` (default true). Use `--apply=false` to pull only.
+Flags: `-a, --apply` (default true), `--recurse-submodules` (default true). Use `--apply=false` to pull only.
 
 ### `chezmoi apply`
+
+**Reference:** <https://chezmoi.io/reference/commands/apply/>
 
 Applies the current source state to the home directory. Run after pulling or after editing source files.
 
@@ -34,6 +38,8 @@ chezmoi apply
 ```
 
 ### `chezmoi re-add` / `chezmoi add`
+
+**Reference:** [re-add](https://chezmoi.io/reference/commands/re-add/), [add](https://chezmoi.io/reference/commands/add/)
 
 **Use when:** Capturing local edits (e.g. under `~/.cursor`) back into the source so they can be committed and pushed.
 
@@ -44,22 +50,24 @@ chezmoi apply
 chezmoi re-add ~/.cursor/skills ~/.cursor/agents ~/.cursor/rules
 ```
 
-### Git in source directory
+### `chezmoi git [args...]`
 
-Commit and push are done in the source repo, not via chezmoi:
+**Reference:** <https://chezmoi.io/reference/commands/git/>
+
+Runs git in the source directory. Use this for all git operations; do not `cd` to the source or run `git` directly. Put `--` before git flags (e.g. `-m`, `--rebase`) so chezmoi doesn’t interpret them.
 
 ```bash
-cd ~/.local/share/chezmoi
-git add -A
-git diff --cached --quiet || git commit -m "chore: sync cursor config"
-git pull --rebase   # if syncing with remote before push
-chezmoi apply       # apply merged state
-git push
+chezmoi git add -A
+chezmoi git -- commit -m "chore: sync cursor config"
+chezmoi git -- pull --rebase
+chezmoi git push
 ```
+
+Examples with flags: `chezmoi git -- diff --cached --quiet`, `chezmoi git -- commit -m "message"`.
 
 ## Update vs sync (this skill)
 
 | User intent | Action | Command(s) |
 |-------------|--------|------------|
 | **Update dotfiles** — get latest from remote | Pull + apply | `chezmoi update` |
-| **Sync / push dotfiles** — save my local Cursor changes | Re-add → commit → pull → apply → push | See SKILL.md workflow |
+| **Sync / push dotfiles** — save my local Cursor changes | Re-add → `chezmoi git` add/commit → `chezmoi git pull --rebase` → `chezmoi apply` → `chezmoi git push` | See SKILL.md workflow |

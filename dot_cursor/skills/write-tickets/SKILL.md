@@ -79,12 +79,12 @@ When the subagent returns, proceed to Step 3.
 Launch a subagent with this prompt:
 
 ```
-Read and follow the skill step file at: <absolute-path-to>/steps/publish.md
+Read and follow the skill step file at: <absolute-path-to>/steps/publish-jira.md
 
 Read the ticket manifest from /tmp/write-tickets-manifest.json to get the list
 of finalized tickets and their temp file paths.
 
-The jira-settings template is at: <absolute-path-to>/templates/jira-settings.md
+The publish-settings template is at: <absolute-path-to>/templates/publish-settings.md
 
 After all tickets are created, clean up all temp files:
 - /tmp/write-tickets-research.md
@@ -96,9 +96,9 @@ Return the list of created JIRA ticket keys with links.
 
 ## Shared Conventions
 
-- **JIRA settings:** The publish step resolves JIRA fields (project key, component, sprint, base URL, issue type mapping) from a `.jira-settings.md` file. Lookup order: **project root first** (`<workspace>/.jira-settings.md`), then **user home** (`~/.jira-settings.md`). If neither exists, the user is prompted to create one or specify fields manually. See `steps/publish.md` for the full resolution logic and file template.
-- **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`. The write step is the expert for JIRA ticket content.
-- **JIRA creation** is done in **`steps/publish.md`** (acli, markdown→ADF, workitem create, component/sprint). Never use a separate jira-expert subagent for creation.
+- **Publish settings:** A single config file **`.publish-settings.md`** controls where tickets go and how to connect. Lookup order: **project root** (`<workspace>/.publish-settings.md`), then **user home** (`~/.publish-settings.md`). The file has a **Target** field: `jira`, `github`, or `jira,github`. When Target includes `jira`, the **Jira** section (project key, component, sprint, base URL, issue type mapping) is used by `steps/publish-jira.md`. When Target includes `github`, the **GitHub** section (optional type→labels, optional repo) is used by `steps/publish-github.md`. If no file exists, the user is prompted to create one or specify manually. Template: `templates/publish-settings.md`.
+- **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`.
+- **Jira creation** is in **`steps/publish-jira.md`** (MCP or acli); **GitHub Issues creation** is in **`steps/publish-github.md`** (GitHub CLI). Never use a separate jira-expert subagent for creation.
 - **Links:** When showing a ticket key, always use a link: `[RETIRE-1234](https://gustohq.atlassian.net/browse/RETIRE-1234)`.
 - **No local file paths in ticket content.** Use GitHub links only, using the current project's repository URL (e.g. from `git remote get-url origin` or the workspace context).
 
@@ -118,4 +118,4 @@ All temp files are cleaned up by Step 3 after JIRA tickets are created.
 |------|------|-----------------|
 | 1 | `steps/research.md` | Gather requirements and optional research → write to handoff file |
 | 2 | `steps/write.md` | Identify tickets, confirm plan, generate ticket markdown → write manifest |
-| 3 | `steps/publish.md` | Create in JIRA in order, clean up all temp files |
+| 3 | `steps/publish-jira.md` | Create in JIRA in order, clean up all temp files |

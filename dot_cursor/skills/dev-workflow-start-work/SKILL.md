@@ -1,18 +1,20 @@
 ---
 name: dev-workflow-start-work
-description: Start or resume work on a Jira ticket by extracting ticket ID from branch name, fetching requirements via Jira MCP, creating an implementation plan, and executing it. Use when the user wants to start ticket work, resume a ticket, implement Jira requirements, begin coding on a branch, or mentions "start the ticket" or "execute the ticket".
+description: Start or resume work on a Jira ticket or GitHub issue by extracting the ID from the branch name, fetching requirements via Jira MCP or GitHub (gh/API), creating an implementation plan, and executing it. Use when the user wants to start ticket work, resume a ticket, implement requirements from Jira or a GitHub issue, begin coding on a branch, or mentions "start the ticket" or "execute the ticket".
 ---
 
-# Execute Ticket
+# Execute Ticket or Issue
 
-This skill automates starting or resuming work on a Jira ticket by:
+This skill automates starting or resuming work on a Jira ticket or GitHub issue by:
 
-1. Extracting the ticket ID from the current branch name
-2. Fetching ticket details using Jira MCP
+1. Extracting the ticket or issue ID from the current branch name
+2. Fetching details using Jira MCP (Jira) or gh/API (GitHub)
 3. Creating an implementation plan
 4. Confirming the plan with the user
 5. Asking about commit strategy using AskQuestion tool
 6. Executing the plan according to chosen commit strategy
+
+**Sources:** Branch names may indicate **Jira** (pattern `[A-Z]+-\d+`, e.g. RETIRE-123-...) or **GitHub** (pattern `issue-(\d+)` or `^(\d+)-`, e.g. issue-1-..., 1-add-feature). Fetch Jira via jira-expert subagent; fetch GitHub via `gh issue view N --repo owner/repo --json title,body,state,number` or mcp_web_fetch(issue URL) if gh unavailable.
 
 ## When to Use
 
@@ -26,38 +28,25 @@ Apply this skill when:
 
 ## Workflow
 
-### Step 1: Extract Ticket ID from Branch
+### Step 1: Extract Ticket or Issue ID from Branch
 
-Get the current branch name and extract the ticket ID:
+Get the current branch name and extract the identifier:
 
 ```bash
 git branch --show-current
 ```
 
-**Expected branch format**: `RETIRE-XXXX-description` or `RETIRE-XXXX`
+**Jira:** Pattern `[A-Z]+-\d+` (e.g. RETIRE-1871, RNDCORE-12097). **GitHub:** Pattern `issue-(\d+)` or leading `(\d+)-` (e.g. issue-1, 1-add-feature).
 
-- If the branch contains a ticket ID (e.g., RETIRE-1871), proceed to Step 2
-- If no ticket ID is found in the branch name, proceed to "No Ticket in Branch" below
+- If a Jira ticket ID is found → proceed to Step 2 (Jira)
+- If a GitHub issue number is found → proceed to Step 2 (GitHub); use current repo unless branch or context specifies owner/repo
+- If neither is found → proceed to "No Ticket in Branch" below
 
-### Step 2: Fetch Ticket Details
+### Step 2: Fetch Details
 
-Use the Task tool with `subagent_type: "jira-expert"` to fetch the ticket details:
+**Jira:** Use the Task tool with `subagent_type: "jira-expert"` and prompt to fetch full details for ticket [TICKET-ID] (description, acceptance criteria, requirements, comments). Get: summary, description, acceptance criteria, requirements, comments, status, linked issues.
 
-```
-Use Task tool with:
-- subagent_type: "jira-expert"
-- prompt: "Fetch full details for ticket [TICKET-ID] including description, acceptance criteria, requirements, and any comments or attachments. Return a comprehensive summary."
-- description: "Fetch Jira ticket details"
-```
-
-The subagent will use the Jira MCP to get:
-
-- Ticket summary and description
-- Acceptance criteria
-- Requirements and specifications
-- Comments and discussion
-- Current status
-- Any linked issues or dependencies
+**GitHub:** Fetch the issue: `gh issue view <N> --json title,body,state,number` (add `--repo owner/repo` if not current repo). If gh fails or is unavailable, use mcp_web_fetch with `https://github.com/owner/repo/issues/N`. Use title and body as the requirement summary; no separate acceptance criteria unless stated in the body.
 
 ### Step 3: Analyze Requirements
 
@@ -273,42 +262,41 @@ Each commit is focused, testable, and reviewable on its own.
 
 ## No Ticket in Branch
 
-If the branch name doesn't contain a ticket ID:
+If the branch name doesn't contain a Jira key or GitHub issue number:
 
 Use AskQuestion tool to present options:
 
 ```
 Options:
-1. "I'm working on a specific ticket" → Prompt for ticket ID
-2. "This is unticketed work (use RETIRE-1908)" → Use placeholder ticket
-3. "Let me check out a different branch" → List recent branches
-4. "I want to create a new branch for a ticket" → Use dev-workflow-initialize skill
+1. "Jira ticket" → Prompt for ticket number (e.g. RETIRE-123)
+2. "GitHub issue" → Prompt for issue URL or owner/repo#N
+3. "Unticketed work (use RETIRE-1908)" → Use placeholder
+4. "Check out a different branch" → List recent branches
+5. "Create a new branch for a ticket/issue" → Use dev-workflow-initialize skill
 ```
 
-**If user provides ticket ID**: Proceed with that ticket (Step 2)
-**If unticketed work**: Use RETIRE-1908 as placeholder, create plan based on user description
+**If user provides Jira key**: Proceed with that ticket (Step 2 Jira)
+**If user provides GitHub issue**: Fetch issue (Step 2 GitHub), then create plan
+**If unticketed**: Use RETIRE-1908, create plan from user description
 **If switching branches**: Help them switch, then re-run workflow
-**If creating new branch**: Delegate to the `dev-workflow-initialize` skill
+**If creating new branch**: Delegate to `dev-workflow-initialize`
 
 ## Edge Cases
 
-### Ticket Not Found
+### Ticket or Issue Not Found
 
-If Jira MCP cannot find the ticket:
+**Jira:** If Jira MCP cannot find the ticket — verify key format (e.g. RETIRE-XXXX), access, and existence; offer to proceed with a manual description.
 
-- Verify the ticket ID format (should be RETIRE-XXXX)
-- Check if user has access to the ticket
-- Confirm the ticket exists in Jira
-- Offer to proceed with a manual description
+**GitHub:** If gh or API returns 404 — verify repo and issue number, check repo is public or auth; try mcp_web_fetch for public issue URL; offer to proceed with manual description.
 
-### Jira MCP Unavailable
+### Jira MCP / GitHub Unavailable
 
-If the Jira MCP is not available:
+If the relevant integration (Jira MCP or gh) is unavailable:
 
-- Inform the user that Jira integration is unavailable
-- Ask user to provide ticket requirements manually
-- Create plan based on user-provided information
-- Document this limitation in the plan
+- Inform the user
+- Ask for requirements manually (paste description or summary)
+- Create plan from user-provided information
+- Document the limitation in the plan
 
 ### Ambiguous Requirements
 
@@ -354,11 +342,13 @@ This skill works well with:
 
 **User**: "Start the ticket"
 
-**Agent**:
+**Agent** (Jira example):
 
 1. Checks branch: `RETIRE-1871-android-splash-screen`
 2. Extracts ticket: RETIRE-1871
 3. Launches jira-expert subagent to fetch details
+
+**Agent** (GitHub example): Branch `issue-1-add-auth` → extract issue 1, run `gh issue view 1 --json title,body,state,number`, then create plan from title/body.
 4. Analyzes requirements
 5. Creates plan with todos:
    - [ ] Configure Android splash screen resources
