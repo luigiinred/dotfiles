@@ -131,7 +131,9 @@ Use `user-maestro-inspect_view_hierarchy` to find the element ID to crop on.
 
 #### Option B: Video Recording
 
-Start recording, perform interactions if needed, then stop:
+**IMPORTANT: Do NOT use the CLI `maestro record` command.** It is extremely slow (renders frames to a cloud service or locally with heavy overhead) and frequently hangs or times out. Instead, use the MCP to start a recording, run the flow, then stop the recording. This is done by embedding `startRecording` / `stopRecording` in the flow YAML and running it via `user-maestro-run_flow`.
+
+Use `user-maestro-run_flow` with `startRecording`/`stopRecording` in the flow:
 
 ```yaml
 appId: com.guideline.mobile
@@ -160,6 +162,17 @@ The video saves as `<output-name>.mp4`.
 - startRecording:
     path: <output-name>
     optional: true
+```
+
+For recording an entire existing flow, wrap it with `startRecording`/`stopRecording` via `runFlow`:
+
+```yaml
+appId: com.guideline.mobile
+---
+- startRecording: <output-name>
+- runFlow:
+    file: <path-to-existing-flow.yml>
+- stopRecording
 ```
 
 ### Phase 5: Deliver Results
@@ -225,4 +238,5 @@ Saves as `.mp4`. Must call `stopRecording` to finalize the file.
 | Wrong screen after navigation | Use `inspect_view_hierarchy` to see current state, adjust taps |
 | Screenshot is blank/wrong | Verify the element ID for cropOn, add `waitForAnimationToEnd` before capture |
 | Video recording fails | Try with `optional: true`, or check device compatibility |
+| Recording is very slow / hangs | Do NOT use `maestro record` CLI. Use `startRecording`/`stopRecording` in flow YAML via `user-maestro-run_flow` MCP instead |
 | Element not found for crop | Use `inspect_view_hierarchy` to find the correct ID |
