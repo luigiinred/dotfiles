@@ -1,5 +1,5 @@
 ---
-name: investigate-create-dependency-graph
+name: investigate-diagram
 description: Generate dependency diagrams from code or architecture. Traces code-level dependencies (hooks, queries, providers, components) or maps high-level system architecture. Outputs Mermaid diagrams in markdown or FigJam via Figma MCP. Use when the user asks to map dependencies, visualize relationships, create a dependency diagram, diagram an architecture, or trace how systems connect.
 ---
 
