@@ -134,7 +134,7 @@ Keep a mapping: placeholder → JIRA key (e.g. "Ticket #1" → "RETIRE-1115"). U
 
 ### After All Tickets
 
-1. **Clean up all temp files:** Delete these files — they are no longer needed:
+1. **Clean up all temp files** — unless the orchestrator instructed you **not to** (because Target is `jira,github` and the GitHub publish step will run next and will clean up). If you were told to skip cleanup, do not delete any of the files below. Otherwise delete:
    - `/tmp/write-tickets-research.md` (Step 1 handoff)
    - `/tmp/write-tickets-manifest.json` (Step 2 handoff)
    - All `/tmp/ticket-N-*.md` files (ticket markdown from Step 2)

@@ -16,7 +16,7 @@ Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into w
         ↓
 [Subagent 2: Write]     →  /tmp/ticket-N-*.md + /tmp/write-tickets-manifest.json
         ↓
-[Subagent 3: Publish]   →  JIRA tickets created, temp files cleaned up
+[Subagent 3: Publish]   →  Tickets/issues created (Jira and/or GitHub per Target), temp files cleaned up
 ```
 
 ## How to Run
@@ -76,22 +76,34 @@ When the subagent returns, proceed to Step 3.
 
 ### Step 3: Publish
 
-Launch a subagent with this prompt:
+**Before launching the publish subagent:** Resolve publish target so you use the correct step and settings.
+
+1. **Resolve `.publish-settings.md`:** Read `<workspace-root>/.publish-settings.md`, or if missing `~/.publish-settings.md`. If neither exists, use AskQuestion to ask the user where to create it (project vs home) or to specify target manually; then create from `templates/publish-settings.md` or note the chosen target.
+2. **Parse the Target field:** `jira`, `github`, or `jira,github` (comma-separated, either order). This decides which publish step(s) to run and which section of the config each step uses.
+
+**Then launch subagent(s) according to Target:**
+
+- **Target is `jira` only:** One subagent with `steps/publish-jira.md` and the publish-settings template path. It uses the **Jira** section of `.publish-settings.md`.
+- **Target is `github` only:** One subagent with `steps/publish-github.md` and the publish-settings template path. It uses the **GitHub** section of `.publish-settings.md`.
+- **Target is `jira,github` (or `github,jira`):** Two subagents in sequence. First: run `steps/publish-jira.md` with publish-settings; tell it **do not clean up temp files** (the GitHub step will run next and will clean up). Second: run `steps/publish-github.md` with publish-settings; it cleans up all temp files at the end.
+
+Use this prompt shape (replace `STEP_FILE` and optional cleanup note as above):
 
 ```
-Read and follow the skill step file at: <absolute-path-to>/steps/publish-jira.md
+Read and follow the skill step file at: <absolute-path-to>/steps/STEP_FILE
 
 Read the ticket manifest from /tmp/write-tickets-manifest.json to get the list
 of finalized tickets and their temp file paths.
 
 The publish-settings template is at: <absolute-path-to>/templates/publish-settings.md
+[If Target is jira,github and this is the Jira step: Do not delete any temp files; the GitHub publish step will run next and will clean up.]
 
-After all tickets are created, clean up all temp files:
+After all tickets/issues are created, clean up all temp files (unless instructed above to skip):
 - /tmp/write-tickets-research.md
 - /tmp/write-tickets-manifest.json
 - All /tmp/ticket-N-*.md files
 
-Return the list of created JIRA ticket keys with links.
+Return the list of created ticket keys or issue links.
 ```
 
 ## Shared Conventions
@@ -110,7 +122,7 @@ Return the list of created JIRA ticket keys with links.
 | `/tmp/ticket-N-*.md` | Step 2 | Step 3 | Individual ticket markdown |
 | `/tmp/write-tickets-manifest.json` | Step 2 | Step 3 | Ticket list with titles, types, and temp file paths |
 
-All temp files are cleaned up by Step 3 after JIRA tickets are created.
+All temp files are cleaned up by Step 3 after tickets/issues are created (by the last publish step when Target is both).
 
 ## Steps Reference
 
@@ -118,4 +130,4 @@ All temp files are cleaned up by Step 3 after JIRA tickets are created.
 |------|------|-----------------|
 | 1 | `steps/research.md` | Gather requirements and optional research → write to handoff file |
 | 2 | `steps/write.md` | Identify tickets, confirm plan, generate ticket markdown → write manifest |
-| 3 | `steps/publish-jira.md` | Create in JIRA in order, clean up all temp files |
+| 3 | `steps/publish-jira.md` or `steps/publish-github.md` (or both if Target `jira,github`) | Create in JIRA and/or GitHub per Target; clean up temp files (Jira step skips cleanup when both targets) |
