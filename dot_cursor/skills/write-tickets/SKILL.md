@@ -112,7 +112,41 @@ Return the list of created ticket keys or issue links.
 - **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`.
 - **Jira creation** is in **`steps/publish-jira.md`** (MCP or acli); **GitHub Issues creation** is in **`steps/publish-github.md`** (GitHub CLI). Never use a separate jira-expert subagent for creation.
 - **Links:** When showing a ticket key, always use a link: `[RETIRE-1234](https://gustohq.atlassian.net/browse/RETIRE-1234)`.
-- **No local file paths in ticket content.** Use GitHub links only, using the current project's repository URL (e.g. from `git remote get-url origin` or the workspace context).
+- **No local file paths in ticket content.** Every file reference in ticket descriptions, comments, or any JIRA content MUST be a GitHub link. See **GitHub Links** below.
+
+## GitHub Links
+
+**All file references in JIRA content (tickets, comments, research) MUST be GitHub links — never bare file paths.**
+
+This applies to ALL Jira interactions: ticket creation via write-tickets, comments via jira-expert subagent, or any other Jira update.
+
+### How to construct
+
+1. **Get the repo URL:** Run `git remote get-url origin` and convert to HTTPS browse URL:
+   - `git@github.com:org/repo.git` → `https://github.com/org/repo`
+   - `https://github.com/org/repo.git` → `https://github.com/org/repo`
+
+2. **Get the branch:** Use `main` for general references, or the current branch (`git branch --show-current`) for in-progress work.
+
+3. **Build the link:**
+   - File: `[filename.ts](https://github.com/org/repo/blob/main/path/to/filename.ts)`
+   - File + line: `[filename.ts#L45](https://github.com/org/repo/blob/main/path/to/filename.ts#L45)`
+   - File + range: `[filename.ts#L10-L25](https://github.com/org/repo/blob/main/path/to/filename.ts#L10-L25)`
+
+### Examples
+
+```markdown
+- Entry point: [usePublicFeatureFlags.ts](https://github.com/guideline-app/mobile-app/blob/main/src/shared/providers/FeatureFlagsProvider/usePublicFeatureFlags.ts)
+- Web equivalent: [useFeature.ts#L29-L39](https://github.com/guideline-app/app/blob/main/client/shared/lib/featureFlags/useFeature.ts#L29-L39)
+```
+
+### When using jira-expert subagent
+
+When delegating to a jira-expert subagent for comments or updates, **always include this instruction in the subagent prompt:**
+
+> All file references must be GitHub links, not bare file paths. Construct links using the repo URL `<repo-url>` in the format `[filename](repo-url/blob/main/path/to/file)`.
+
+Resolve the repo URL before launching the subagent and pass it in the prompt.
 
 ## Handoff Files
 
