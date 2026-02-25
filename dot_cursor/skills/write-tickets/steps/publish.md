@@ -8,32 +8,34 @@ Read **`/tmp/write-tickets-manifest.json`** — this is the handoff file from St
 
 ## Workflow
 
-### 1. JIRA Config
+### 1. Publish Config
 
 Do this first, before creating any tickets.
 
-**Resolve `.jira-settings.md`:**
+**Resolve `.publish-settings.md`:**
 
-1. **Check project root:** Read `<workspace-root>/.jira-settings.md`. If it exists, use it.
-2. **Check user home:** If not found, read `~/.jira-settings.md`. If it exists, use it.
-3. **If neither exists:** Use AskQuestion to prompt the user:
+1. **Check project root:** Read `<workspace-root>/.publish-settings.md`. If it exists, use it.
+2. **Check user home:** If not found, read `~/.publish-settings.md`. If it exists, check the **Workspaces** table for the current workspace directory name (the basename of the workspace root, e.g. `mobile-app`). If the current workspace is listed, use it. If the workspace is **not** listed, treat it as not found and continue to step 3.
+3. **If no matching settings found:** Use AskQuestion to prompt the user:
 
    ```
    AskQuestion({
-     "title": "No .jira-settings.md found",
+     "title": "No publish settings found",
      "questions": [{
-       "id": "jira_settings",
-       "prompt": "No .jira-settings.md found in this project or your home directory. How should I get JIRA config?",
+       "id": "publish_settings",
+       "prompt": "No .publish-settings.md found for this project. How should I get publish config?",
        "options": [
-         {"id": "create_project", "label": "Create .jira-settings.md in this project"},
-         {"id": "create_home", "label": "Create ~/.jira-settings.md in my home directory"},
+         {"id": "create_project", "label": "Create .publish-settings.md in this project"},
+         {"id": "create_home", "label": "Create ~/.publish-settings.md (global)"},
+         {"id": "add_workspace", "label": "Add this workspace to existing ~/.publish-settings.md"},
          {"id": "manual", "label": "Specify manually (don't save)"}
        ]
      }]
    })
    ```
 
-   - **"Create in project" or "Create in home":** Ask the user for the required fields (project key, component, sprint, JIRA base URL, issue type mapping). Read this skill's `templates/jira-settings.md` for the default template, fill in the user's values, and write to the chosen location. Then use it.
+   - **"Create in project" or "Create in home":** Ask the user for the required fields (project key, component, sprint, JIRA base URL, issue type mapping). Read this skill's `templates/publish-settings.md` for the default template, fill in the user's values, and write to the chosen location. For global files, add the current workspace directory name to the Workspaces table. Then use it.
+   - **"Add this workspace":** Read `~/.publish-settings.md`, add the current workspace directory name to the Workspaces table, and write it back. Then use it.
    - **"Specify manually":** Ask for project key, component, sprint, and JIRA base URL inline. Do not save to disk.
 
 **After resolving settings:**
