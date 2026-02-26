@@ -169,7 +169,7 @@ RETIRE branch:
 The PR body must include the `[[[...]]]` block and a screenshot placeholder.
 
 ```bash
-gh pr create --title "<type>: TICKET-123 <short description>" --body "$(cat <<'EOF'
+gh pr create --draft --title "<type>: TICKET-123 <short description>" --body "$(cat <<'EOF'
 <[[[...]]] block from Step 4>
 
 ---
@@ -210,12 +210,12 @@ PR_URL=$(gh pr view --json url --jq '.url')
 Then output a message with the URL as a clickable markdown link:
 
 ```
-PR created successfully! 🎉
+Draft PR created successfully! 🎉
 
-[View PR #<number>]($PR_URL)
+[View Draft PR #<number>]($PR_URL)
 ```
 
-Example output: "PR created successfully! 🎉\n\n[View PR #2640](https://github.com/guideline-app/mobile-app/pull/2640)"
+Example output: "Draft PR created successfully! 🎉\n\n[View Draft PR #2640](https://github.com/guideline-app/mobile-app/pull/2640)"
 
 ### Step 7: Offer to Start Review
 
@@ -241,7 +241,7 @@ PR Creation Progress:
 - [ ] Determined correct base branch (may not be main)
 - [ ] Analyzed diff from base branch
 - [ ] Generated PR description with [[[...]]] block
-- [ ] Created PR with gh CLI
+- [ ] Created draft PR with gh CLI
 - [ ] Reported PR URL as clickable markdown link
 - [ ] Offered to start PR review
 ```
