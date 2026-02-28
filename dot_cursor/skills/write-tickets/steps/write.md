@@ -1,6 +1,6 @@
 # Step 2: Write
 
-Identify tickets from the gathered data, get plan approval, then generate ticket documents for each item. This step is the expert in writing JIRA tickets: use this skill's templates and the rules below. Temp files for review; no JIRA creation yet.
+Identify tickets from the gathered data, get plan approval, then generate ticket documents for each item. This step is the expert in writing tickets/issues: use this skill's templates and the rules below. Temp files for review; no creation yet (that happens in the publish step).
 
 ## Prerequisites
 
@@ -92,7 +92,7 @@ Do NOT proceed to writing ticket content until the plan is approved.
 
 6. **Read the temp file back** (user may have edited it in their IDE). Store the file path and metadata (title, type) for this ticket. **Do NOT delete the temp file** — the publish step reads directly from it.
 
-7. Proceed to the next ticket. When generating the next ticket's markdown, you may reference "Ticket #1", "Ticket #2", etc. — Step 3 (publish) will substitute actual JIRA keys when creating.
+7. Proceed to the next ticket. When generating the next ticket's markdown, you may reference "Ticket #1", "Ticket #2", etc. — Step 3 (publish) will substitute actual ticket keys/issue numbers when creating.
 
 ### After All Tickets
 

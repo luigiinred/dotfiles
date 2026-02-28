@@ -1,69 +1,103 @@
 ---
 name: dev-workflow-initialize
-description: Start working on a Jira ticket or GitHub issue by fetching details and creating a git branch in a new worktree. Use when the user wants to start a ticket, begin work on a Jira issue, a GitHub issue, or create a branch. For unticketed work, use placeholder RETIRE-1908.
+description: Start working on a ticket/issue by fetching details and creating a git branch in a new worktree. Reads .publish-settings.md to determine target (Jira or GitHub). Use when the user wants to start a ticket, begin work on an issue, or create a branch for a task. For unticketed work, asks for a short description to build the branch name.
 ---
 
-# Start Ticket or Issue
+# Start Ticket
 
-Start working on a Jira ticket or GitHub issue by fetching its details and creating a feature branch in a new worktree based on origin/main. Requirements can come from **Jira** (e.g. RETIRE-123), **GitHub** (e.g. owner/repo#1 or issue URL), or **unticketed** (placeholder RETIRE-1908). For source rules and branch naming see [sources.md](sources.md).
-
-## Placeholder Ticket (Unticketed Work)
-
-When the user is working on an **unticketed task** (no Jira ticket yet), use this placeholder:
-
-- **RETIRE-1908** — Use when starting a branch or worktree for work that doesn’t have a ticket. Fetch this ticket for branch naming and worktree setup; the summary/description may be generic. You can still derive a branch name from what the user is doing (e.g. "RETIRE-1908-add-settings-screen") or use the ticket summary if it’s descriptive.
-
-If the user says they’re working on something without a ticket, unticketed work, or similar, use RETIRE-1908 and optionally ask for a short description to build the branch name.
+Start working on a ticket or issue by fetching its details and creating a feature branch in a new worktree based on origin/main. Reads `.publish-settings.md` to determine whether the project uses Jira or GitHub Issues.
 
 ## Workflow
 
-### Step 1: Get Ticket or Issue
+### Step 1: Resolve Publish Settings
 
-If the user hasn't provided a ticket or issue, **ALWAYS use the AskQuestion tool:**
+Read `.publish-settings.md` to determine the target system. Follow the lookup order from the `publish-settings.mdc` rule:
 
-- Title: "Which Ticket or Issue?"
-- Question: "What would you like to start from?"
+1. **Project root:** `<workspace-root>/.publish-settings.md` — if it exists, use it.
+2. **User home:** `~/.publish-settings.md` — if it exists and the current workspace directory name appears in the Workspaces table, use it.
+3. **Not found:** Default to `github` and use the current repo (from `git remote get-url origin`).
+
+Extract from the matching project block:
+
+| Field | Used for |
+|-------|----------|
+| **Target** | `github` or `jira` — determines ticket system |
+| **Repo** (GitHub) | GitHub repo for `gh` commands (default: current repo) |
+| **Project Key** (Jira) | Jira project key for ticket prefixes and fetching |
+| **JIRA base URL** (Jira) | For constructing ticket links |
+
+### Step 2: Get Ticket Number
+
+If the user hasn't provided a ticket number, **ALWAYS use the AskQuestion tool.**
+
+**If target is `github`:**
+
+- Title: "Which Issue?"
+- Question: "What GitHub issue would you like to start?"
 - Options:
-  - id: "jira", label: "Jira ticket (e.g., RETIRE-123)"
-  - id: "github", label: "GitHub issue (URL or owner/repo#N)"
-  - id: "unticketed", label: "Unticketed work (use RETIRE-1908)"
+  - id: "ticket", label: "Specify an issue number (e.g., #5)"
+  - id: "unticketed", label: "Unticketed work (no issue)"
+
+**If target is `jira`:**
+
+- Title: "Which Ticket?"
+- Question: "What Jira ticket would you like to start?"
+- Options:
+  - id: "ticket", label: "Specify a ticket number (e.g., PROJ-123)"
+  - id: "unticketed", label: "Unticketed work (no ticket)"
 
 Based on the response:
 
-- "jira" → Ask for the Jira ticket number (e.g. RETIRE-123)
-- "github" → Ask for the GitHub issue URL or owner/repo#N (or #N if current repo)
-- "unticketed" → Use **RETIRE-1908** and optionally ask for a brief description for the branch name
+- "ticket" → Ask conversationally for the ticket/issue number
+- "unticketed" → Ask for a brief description of the work to generate a branch name (e.g., "add widget background settings")
 
-If the user already provided a GitHub issue URL or owner/repo#N, treat as GitHub and parse it; no need to ask.
+### Step 3: Fetch Ticket Details
 
-### Step 2: Fetch Details
+Skip this step for unticketed work.
 
-**Jira:** Use the `jira-expert` subagent to fetch the ticket by key. Present: key, type, status, priority; summary; description (condensed); sprint/epic if available.
-
-**GitHub:** Fetch the issue: from URL parse owner/repo and number, then `gh issue view N --repo owner/repo --json title,body,state,number`; or for #N in current repo use `gh issue view N --json title,body,state,number`. If `gh` fails or is unavailable, try `mcp_web_fetch` with the issue URL (public repos only). Present: number, title, state; body (condensed).
-
-### Step 3: Generate Branch Name
-
-Generate a kebab-case summary from the title/summary (lowercase, spaces/special chars → hyphens, no consecutive hyphens, 3-5 words).
-
-- **Jira:** `[TICKET_KEY]-[kebab-case-summary]` (e.g. RETIRE-123-add-user-authentication)
-- **GitHub:** `issue-[N]-[kebab-case-summary]` (e.g. issue-1-add-auth-flow)
-- **Unticketed:** `RETIRE-1908-[kebab-case-summary]`
-
-### Step 4: Determine Worktree Paths
-
-- `[MAIN_WORKTREE]` = current workspace root (e.g., `/Users/timmy.garrabrant/Developer/mobile-app`)
-- `[PROJECT_NAME]` = basename of main worktree (e.g., `mobile-app`)
-- `[BRANCH_NAME]` = generated branch name from Step 3
-- `[NEW_WORKTREE]` = `../[PROJECT_NAME]-[BRANCH_NAME]`
-
-### Step 5: Check Prerequisites
+**If target is `github`:**
 
 ```bash
-# Check for existing branch
-git branch --list [BRANCH_NAME]
+gh issue view [NUMBER] --repo [REPO]
+```
 
-# Check for existing worktree
+Present: issue number, title, state, labels, body (condensed).
+
+**If target is `jira`:**
+
+Use the `jira-expert` subagent to fetch issue `[TICKET_NUMBER]`.
+
+Present: ticket key, type, status, priority, summary, description (condensed), sprint and epic info if available.
+
+### Step 4: Generate Branch Name
+
+Generate a kebab-case summary:
+
+1. Take the ticket title/summary (or the user's description for unticketed work)
+2. Convert to lowercase
+3. Replace spaces and special characters with hyphens
+4. Remove consecutive hyphens
+5. Keep it concise (3-5 words max)
+
+Branch name format depends on the source:
+
+| Source | Format | Example |
+|--------|--------|---------|
+| GitHub issue | `[NUMBER]-[kebab-summary]` | `5-add-widget-background` |
+| Jira ticket | `[KEY]-[kebab-summary]` | `RETIRE-123-add-user-auth` |
+| Unticketed | `[kebab-summary]` | `widget-background-settings` |
+
+### Step 5: Determine Worktree Paths
+
+- `[MAIN_WORKTREE]` = current workspace root
+- `[PROJECT_NAME]` = basename of main worktree (e.g., `AerialFrame`)
+- `[BRANCH_NAME]` = generated branch name from Step 4
+- `[NEW_WORKTREE]` = `../[PROJECT_NAME]-[BRANCH_NAME]`
+
+### Step 6: Check Prerequisites
+
+```bash
+git branch --list [BRANCH_NAME]
 git worktree list | grep [BRANCH_NAME]
 ```
 
@@ -82,59 +116,50 @@ Based on the response:
 - "suffix" → Create new worktree with numeric suffix
 - "abort" → Stop the workflow
 
-### Step 6: Create Worktree with New Branch
-
-Always base the new branch on origin/main:
+### Step 7: Create Worktree with New Branch
 
 ```bash
 git fetch origin main
 git worktree add [NEW_WORKTREE] -b [BRANCH_NAME] origin/main
 ```
 
-### Step 7: Copy Required Files
+### Step 8: Copy Required Files & Install Dependencies
 
-Copy .env from the main worktree:
-
-```bash
-cp [MAIN_WORKTREE]/.env [NEW_WORKTREE]/.env
-```
-
-### Step 8: Trust Mise Configuration
-
-Trust the mise configuration in the new worktree to avoid permission errors:
+Only run each sub-step if the relevant file exists in the main worktree:
 
 ```bash
+# Copy .env if it exists
+[ -f [MAIN_WORKTREE]/.env ] && cp [MAIN_WORKTREE]/.env [NEW_WORKTREE]/.env
+
+# Trust mise config if .mise.toml exists
+[ -f [NEW_WORKTREE]/.mise.toml ] && cd [NEW_WORKTREE] && mise trust
+
+# Install dependencies based on what dependency manager the project uses
 cd [NEW_WORKTREE]
-mise trust
+if [ -f package.json ]; then npm install; fi
+if [ -f Podfile ]; then pod install; fi
+if [ -f Package.swift ]; then swift package resolve; fi
 ```
 
-This prevents the "Config files are not trusted" error when mise tools are invoked.
+Skip sub-steps cleanly when files don't exist — no warnings needed.
 
-### Step 9: Install Dependencies
-
-```bash
-cd [NEW_WORKTREE]
-npm install
-```
-
-Monitor progress - this takes several minutes.
-
-### Step 10: Report Success
+### Step 9: Report Success
 
 ```
-Started [TICKET_OR_ISSUE_REF]: "[Summary]"
+Started [TICKET_REF]: "[Summary]"
 
 Worktree created!
 Branch: [BRANCH_NAME]
 Location: [NEW_WORKTREE]
 Based on: origin/main
-
-Files copied: .env
-Mise config: trusted
-Dependencies: installed
 ```
 
-### Step 11: Open in Cursor
+Where `[TICKET_REF]` is:
+- GitHub: `#N` with link to the issue
+- Jira: `KEY-N` with link to Jira
+- Unticketed: the description the user provided
+
+### Step 10: Open in Cursor
 
 **ALWAYS use the AskQuestion tool:**
 
@@ -149,7 +174,7 @@ Based on the response:
 - "open" → Run `cursor [NEW_WORKTREE]`
 - "skip" → Continue to next step
 
-### Step 12: Prompt to Start Work
+### Step 11: Prompt to Start Work
 
 **ALWAYS use the AskQuestion tool:**
 
@@ -166,22 +191,19 @@ Based on the response:
 
 ## Error Handling
 
-- **Ticket or issue not found**: Report the error and ask for a valid Jira key or GitHub issue URL/number
+- **Ticket/issue not found**: Report the error and ask for a valid number
 - **Branch exists**: Ask if user wants to switch to existing worktree or create with suffix
 - **Worktree exists**: Ask to remove/recreate or use existing
-- **Missing .env in main worktree**: Warn user that .env is missing from main worktree and must be created manually
-- **mise trust fails**: Warn about the failure but continue with installation (mise trust is not critical)
-- **npm install fails**: Show error, suggest `rm -rf node_modules && npm install`
-- **Dirty working directory**: Warn user about uncommitted changes (though worktrees are isolated, this is informational)
+- **Missing .env in main worktree**: Skip silently (only copy if it exists)
+- **mise trust fails**: Warn but continue (not critical)
+- **Dependency install fails**: Show error and suggest cleanup commands
+- **Dirty working directory**: Warn about uncommitted changes (informational)
 
 ## Cleanup
 
 When done with a ticket:
 
 ```bash
-# Remove worktree
 git worktree remove [NEW_WORKTREE]
-
-# Delete branch if merged
 git branch -d [BRANCH_NAME]
 ```

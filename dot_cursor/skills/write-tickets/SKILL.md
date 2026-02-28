@@ -1,13 +1,13 @@
 ---
 name: write-tickets
-description: Use when creating Jira tickets, writing project tickets, user stories, bug reports, or tech debt items. This is the skill for Jira ticket creation. Runs a three-step pipeline (research → write → publish) using the steps in this skill's steps/ directory.
+description: Use when creating project tickets or issues (Jira or GitHub). Reads .publish-settings.md to determine target system. Runs a three-step pipeline (research → write → publish) using the steps in this skill's steps/ directory.
 ---
 
 # Write Tickets
 
 ## Overview
 
-Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets. The workflow runs three steps in sequence, each in its own **subagent**. Data is passed between steps via temp files.
+Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets or issues. Reads `.publish-settings.md` to determine whether to publish to Jira or GitHub Issues. The workflow runs three steps in sequence, each in its own **subagent**. Data is passed between steps via temp files.
 
 ## Pipeline
 
@@ -16,7 +16,7 @@ Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into w
         ↓
 [Subagent 2: Write]     →  /tmp/ticket-N-*.md + /tmp/write-tickets-manifest.json
         ↓
-[Subagent 3: Publish]   →  JIRA tickets created, temp files cleaned up
+[Subagent 3: Publish]   →  Tickets/issues created, temp files cleaned up
 ```
 
 ## How to Run
@@ -91,22 +91,24 @@ After all tickets are created, clean up all temp files:
 - /tmp/write-tickets-manifest.json
 - All /tmp/ticket-N-*.md files
 
-Return the list of created JIRA ticket keys with links.
+Return the list of created ticket/issue keys with links.
 ```
 
 ## Shared Conventions
 
-- **Publish settings:** The publish step resolves JIRA fields (project key, component, sprint, base URL, issue type mapping) from a `.publish-settings.md` file. Lookup order: **project root first** (`<workspace>/.publish-settings.md`), then **user home** (`~/.publish-settings.md`) — but only if the global file's Workspaces table includes the current workspace directory name. If no matching settings are found, the user is prompted to create one, add the workspace to an existing global file, or specify fields manually. See `steps/publish.md` for the full resolution logic and file template.
-- **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`. The write step is the expert for JIRA ticket content.
-- **JIRA creation** is done in **`steps/publish.md`** (acli, markdown→ADF, workitem create, component/sprint). Never use a separate jira-expert subagent for creation.
-- **Links:** When showing a ticket key, always use a link: `[RETIRE-1234](https://gustohq.atlassian.net/browse/RETIRE-1234)`.
-- **No local file paths in ticket content.** Every file reference in ticket descriptions, comments, or any JIRA content MUST be a GitHub link. See **GitHub Links** below.
+- **Publish settings:** The publish step resolves target system and fields from a `.publish-settings.md` file. Lookup order: **project root first** (`<workspace>/.publish-settings.md`), then **user home** (`~/.publish-settings.md`). The `Target` field determines the system: `github` for GitHub Issues, `jira` for Jira. See `steps/publish.md` for the full resolution logic.
+- **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`. The write step is target-neutral — it produces markdown that works for both Jira and GitHub.
+- **Ticket creation** is done in **`steps/publish.md`** which routes to the appropriate system based on the Target field. For GitHub: `gh issue create`. For Jira: Jira MCP or `acli`.
+- **Links:** When showing a created ticket/issue, always use a link:
+  - GitHub: `[#N](https://github.com/owner/repo/issues/N)`
+  - Jira: `[KEY-N](https://your-org.atlassian.net/browse/KEY-N)`
+- **No local file paths in ticket content.** Every file reference in ticket descriptions MUST be a GitHub link. See **GitHub Links** below.
 
 ## GitHub Links
 
-**All file references in JIRA content (tickets, comments, research) MUST be GitHub links — never bare file paths.**
+**All file references in ticket/issue content MUST be GitHub links — never bare file paths.**
 
-This applies to ALL Jira interactions: ticket creation via write-tickets, comments via jira-expert subagent, or any other Jira update.
+This applies to all ticket systems: GitHub Issues, Jira, or any other target.
 
 ### How to construct
 
@@ -144,7 +146,7 @@ Resolve the repo URL before launching the subagent and pass it in the prompt.
 | `/tmp/ticket-N-*.md` | Step 2 | Step 3 | Individual ticket markdown |
 | `/tmp/write-tickets-manifest.json` | Step 2 | Step 3 | Ticket list with titles, types, and temp file paths |
 
-All temp files are cleaned up by Step 3 after JIRA tickets are created.
+All temp files are cleaned up by Step 3 after tickets/issues are created.
 
 ## Steps Reference
 
@@ -152,4 +154,4 @@ All temp files are cleaned up by Step 3 after JIRA tickets are created.
 |------|------|-----------------|
 | 1 | `steps/research.md` | Gather requirements and optional research → write to handoff file |
 | 2 | `steps/write.md` | Identify tickets, confirm plan, generate ticket markdown → write manifest |
-| 3 | `steps/publish.md` | Create in JIRA in order, clean up all temp files |
+| 3 | `steps/publish.md` | Create in target system (GitHub or Jira), clean up all temp files |

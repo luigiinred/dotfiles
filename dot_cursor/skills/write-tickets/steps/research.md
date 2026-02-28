@@ -14,7 +14,7 @@ AskQuestion({
   "questions": [
     {
       "id": "start",
-      "prompt": "I'll help you create well-structured Jira tickets. Ready to provide requirements?",
+      "prompt": "I'll help you create well-structured tickets/issues. Ready to provide requirements?",
       "options": [
         {"id": "proceed", "label": "Yes, I'll provide requirements now"},
         {"id": "abort", "label": "Cancel"}
