@@ -1,6 +1,6 @@
 ---
 name: dev-workflow-create-pr
-description: Create a GitHub pull request using the gh CLI. Analyzes all changes from main, generates a description following the PR template (jira, what, why, who), and creates the PR if one doesn't exist. Use when the user asks to create a PR, open a pull request, or submit changes for review.
+description: Create a GitHub pull request using the gh CLI. Analyzes all changes from main, generates a description following the PR template, and creates the PR if one doesn't exist. Reads .project-settings.md to determine whether the project uses Jira or GitHub Issues. Use when the user asks to create a PR, open a pull request, or submit changes for review.
 ---
 
 # Create Pull Request
@@ -38,7 +38,24 @@ git status
 git push -u origin HEAD
 ```
 
-### Step 3: Determine Base Branch and Analyze Changes
+### Step 3: Resolve Project Settings
+
+Determine whether this project uses Jira or GitHub Issues by reading `.project-settings.md`. Follow the same lookup order as `dev-workflow-initialize`:
+
+1. **Project root:** `<workspace-root>/.project-settings.md` — if it exists, use it.
+2. **User home:** `~/.project-settings.md` — if it exists and the current workspace directory name appears in the Workspaces table, use it.
+3. **Not found:** Default to `github` target (use current repo from `git remote get-url origin`).
+
+Extract from the matching project block:
+
+| Field | Used for |
+|-------|----------|
+| **Target** | `github` or `jira` — determines ticket system |
+| **Repo** (GitHub) | GitHub repo for links (default: current repo) |
+| **Project Key** (Jira) | Jira project key for ticket prefixes |
+| **JIRA base URL** (Jira) | For constructing ticket links |
+
+### Step 4: Determine Base Branch and Analyze Changes
 
 The branch may have been created from `main` or from another feature branch. Determine the correct base branch:
 
@@ -84,11 +101,15 @@ git log main..HEAD --oneline
 git diff main...HEAD --stat
 ```
 
-### Step 4: Generate PR Description
+### Step 5: Generate PR Description
 
-Generate the PR description directly from the diff gathered in Step 3.
+Generate the PR description directly from the diff gathered in Step 4.
 
-**4a. Extract Jira ticket** from the branch name using pattern `[A-Z]+-\d+` (e.g., RNDCORE-12345).
+**5a. Extract ticket/issue reference** based on the target system from Step 3.
+
+#### If target is `jira`:
+
+Extract Jira ticket from the branch name using pattern `[A-Z]+-\d+` (e.g., RNDCORE-12345).
 
 - If not found, **ALWAYS use the AskQuestion tool:**
   - Title: "JIRA Ticket"
@@ -101,15 +122,55 @@ Generate the PR description directly from the diff gathered in Step 3.
 
 - **Link format:**
   - If branch starts with `RETIRE`: use `https://gustohq.atlassian.net/browse/TICKET`
-  - Otherwise: use `https://internal.guideline.tools/jira/browse/TICKET`
+  - Otherwise: use the JIRA base URL from project settings, or `https://internal.guideline.tools/jira/browse/TICKET`
 
-**4b. Analyze changes** from the diff -- understand what changed, why, and who it impacts.
+#### If target is `github`:
 
-**4c. Generate the `[[[...]]]` block:**
+Extract GitHub issue number from the branch name using pattern `^(\d+)-` (e.g., `5-add-widget-background` → `#5`).
+
+- If not found, **ALWAYS use the AskQuestion tool:**
+  - Title: "GitHub Issue"
+  - Question: "Is there a GitHub issue for this PR?"
+  - Options:
+    - id: "specify", label: "Let me specify the issue number"
+    - id: "skip", label: "No issue — skip"
+  - If "specify": Ask conversationally for the issue number
+  - If "skip": omit the issue/ticket line from the description entirely
+
+- **Link format:** `https://github.com/OWNER/REPO/issues/NUMBER` (or use `Closes #N` shorthand)
+
+**5b. Analyze changes** from the diff — understand what changed, why, and who it impacts.
+
+**5c. Generate the `[[[...]]]` block:**
+
+The block format depends on the target system:
+
+**Jira projects:**
 
 ```
 [[[
 **jira:** [TICKET-123](https://internal.guideline.tools/jira/browse/TICKET-123)
+**what:** concise summary of changes
+**why:** business justification
+**who:** affected users/teams
+]]]
+```
+
+**GitHub projects (with issue):**
+
+```
+[[[
+**issue:** #42
+**what:** concise summary of changes
+**why:** business justification
+**who:** affected users/teams
+]]]
+```
+
+**GitHub projects (no issue) or unticketed:**
+
+```
+[[[
 **what:** concise summary of changes
 **why:** business justification
 **who:** affected users/teams
@@ -127,7 +188,7 @@ Generate the PR description directly from the diff gathered in Step 3.
 
 **Examples:**
 
-Simple change (no bullets):
+Simple Jira change (no bullets):
 
 ```
 [[[
@@ -138,7 +199,7 @@ Simple change (no bullets):
 ]]]
 ```
 
-Multiple changes (use bullets):
+Multiple Jira changes (use bullets):
 
 ```
 [[[
@@ -153,7 +214,7 @@ Multiple changes (use bullets):
 ]]]
 ```
 
-RETIRE branch:
+RETIRE branch (Jira):
 
 ```
 [[[
@@ -164,13 +225,34 @@ RETIRE branch:
 ]]]
 ```
 
-### Step 5: Create the PR
+GitHub issue:
+
+```
+[[[
+**issue:** #5
+**what:** Add widget background style setting with none, solid, and glass options
+**why:** Widgets are hard to read over busy slideshow images
+**who:** Users with widget overlays on their display
+]]]
+```
+
+Unticketed (GitHub or no settings):
+
+```
+[[[
+**what:** Refactor drag gesture to use named coordinate space
+**why:** Fixes Retina scale mismatch on macOS
+**who:** macOS users dragging widgets
+]]]
+```
+
+### Step 6: Create the PR
 
 The PR body must include the `[[[...]]]` block and a screenshot placeholder.
 
 ```bash
-gh pr create --draft --title "<type>: TICKET-123 <short description>" --body "$(cat <<'EOF'
-<[[[...]]] block from Step 4>
+gh pr create --draft --title "<type>: <ticket-ref> <short description>" --body "$(cat <<'EOF'
+<[[[...]]] block from Step 5>
 
 ---
 
@@ -181,14 +263,21 @@ EOF
 )"
 ```
 
-**Title format:** Use conventional commit style with the Jira ticket number **always included** in the title. This is critical because release notes are generated from PR titles, and missing ticket numbers make releases harder to trace.
+**Title format:** Use conventional commit style. Include the ticket/issue reference when available — this is critical because release notes are generated from PR titles.
 
-Format: `<type>: TICKET-123 <short description>`
+Format: `<type>: <ticket-ref> <short description>`
 
+Jira examples:
 - `feat: RETIRE-456 add portfolio rebalance alerts`
 - `fix: RNDCORE-12337 handle null dynamic type in C++ bridge`
-- `refactor: RETIRE-2271 migrate account queries to useSuspenseQuery`
-- `chore: RNDCORE-6545 bump rubocop`
+
+GitHub issue examples:
+- `feat: #5 add widget background style setting`
+- `fix: #12 handle nil placement on resize`
+
+No ticket/issue:
+- `feat: add widget background style setting`
+- `refactor: migrate drag gesture to coordinate space`
 
 Type prefixes:
 
@@ -197,9 +286,7 @@ Type prefixes:
 - `refactor:` for code restructuring
 - `chore:` for maintenance
 
-If no ticket exists (user skipped in Step 4a), omit the ticket but still use the type prefix.
-
-### Step 6: Report Success
+### Step 7: Report Success
 
 Get the PR URL and format it as a clickable markdown link:
 
@@ -217,7 +304,7 @@ Draft PR created successfully! 🎉
 
 Example output: "Draft PR created successfully! 🎉\n\n[View Draft PR #2640](https://github.com/guideline-app/mobile-app/pull/2640)"
 
-### Step 7: Offer to Start Review
+### Step 8: Offer to Start Review
 
 After reporting the clickable PR URL, **ALWAYS use the AskQuestion tool:**
 
@@ -238,6 +325,7 @@ Based on the response:
 PR Creation Progress:
 - [ ] Verified no existing PR
 - [ ] Confirmed changes are pushed
+- [ ] Resolved project settings (Jira vs GitHub vs none)
 - [ ] Determined correct base branch (may not be main)
 - [ ] Analyzed diff from base branch
 - [ ] Generated PR description with [[[...]]] block
@@ -248,9 +336,14 @@ PR Creation Progress:
 
 ## Edge Cases
 
-### Branch has no Jira ticket
+### No `.project-settings.md` found
 
-Use `N/A` or ask the user for the ticket ID.
+Default to `github` target. Use the current repo from `git remote get-url origin`. Do NOT prompt to create project settings during PR creation — just use the default and move on.
+
+### Branch has no ticket/issue
+
+For Jira: use `N/A` or ask the user for the ticket ID.
+For GitHub: omit the issue line and proceed without it.
 
 ### Branch created from another feature branch (not main)
 
