@@ -1,21 +1,33 @@
 ---
 name: dev-workflow-initialize
-description: Start working on a ticket/issue by fetching details and creating a git branch in a new worktree. Reads .publish-settings.md to determine target (Jira or GitHub). Use when the user wants to start a ticket, begin work on an issue, or create a branch for a task. For unticketed work, asks for a short description to build the branch name.
+description: Start working on a ticket/issue by fetching details and creating a git branch in a new worktree. Reads .project-settings.md to determine target (Jira or GitHub). Use when the user wants to start a ticket, begin work on an issue, or create a branch for a task. For unticketed work, asks for a short description to build the branch name.
 ---
 
 # Start Ticket
 
-Start working on a ticket or issue by fetching its details and creating a feature branch in a new worktree based on origin/main. Reads `.publish-settings.md` to determine whether the project uses Jira or GitHub Issues.
+Start working on a ticket or issue by fetching its details and creating a feature branch in a new worktree based on origin/main. Reads `.project-settings.md` to determine whether the project uses Jira or GitHub Issues.
 
 ## Workflow
 
-### Step 1: Resolve Publish Settings
+### Step 1: Resolve Project Settings
 
-Read `.publish-settings.md` to determine the target system. Follow the lookup order from the `publish-settings.mdc` rule:
+Read `.project-settings.md` to determine the target system. Follow the lookup order from the `project-settings.mdc` rule:
 
-1. **Project root:** `<workspace-root>/.publish-settings.md` — if it exists, use it.
-2. **User home:** `~/.publish-settings.md` — if it exists and the current workspace directory name appears in the Workspaces table, use it.
-3. **Not found:** Default to `github` and use the current repo (from `git remote get-url origin`).
+1. **Project root:** `<workspace-root>/.project-settings.md` — if it exists, use it.
+2. **User home:** `~/.project-settings.md` — if it exists and the current workspace directory name appears in the Workspaces table, use it.
+3. **Not found:** Prompt the user to create one. Use AskQuestion:
+
+   - Title: "No Project Settings Found"
+   - Question: "No `.project-settings.md` found. This file tells skills whether to use GitHub Issues or Jira. Want me to create one?"
+   - Options:
+     - id: "github", label: "Create for GitHub Issues (recommended for this repo)"
+     - id: "jira", label: "Create for Jira"
+     - id: "skip", label: "Skip — just use GitHub with current repo defaults"
+
+   Based on the response:
+   - "github" → Read the template at `~/.cursor/skills/write-tickets/templates/project-settings.md`, fill in the GitHub example using the current repo name and `git remote get-url origin`, write to `<workspace-root>/.project-settings.md`. Use it.
+   - "jira" → Ask for project key and Jira base URL, fill in the Jira example from the template, write to `<workspace-root>/.project-settings.md`. Use it.
+   - "skip" → Default to `github` target with current repo.
 
 Extract from the matching project block:
 

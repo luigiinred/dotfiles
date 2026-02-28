@@ -8,35 +8,35 @@ Read **`/tmp/write-tickets-manifest.json`** — this is the handoff file from St
 
 ## Workflow
 
-### 1. Resolve Publish Settings
+### 1. Resolve Project Settings
 
 Do this first, before creating any tickets.
 
-**Resolve `.publish-settings.md`:**
+**Resolve `.project-settings.md`:**
 
-1. **Check project root:** Read `<workspace-root>/.publish-settings.md`. If it exists, use it.
-2. **Check user home:** If not found, read `~/.publish-settings.md`. If it exists, check the **Workspaces** table for the current workspace directory name (the basename of the workspace root, e.g. `mobile-app`). If the current workspace is listed, use it. If the workspace is **not** listed, treat it as not found and continue to step 3.
-3. **If no matching settings found:** Use AskQuestion to prompt the user:
+1. **Check project root:** Read `<workspace-root>/.project-settings.md`. If it exists, use it.
+2. **Check user home:** If not found, read `~/.project-settings.md`. If it exists, check the **Workspaces** table for the current workspace directory name (the basename of the workspace root, e.g. `mobile-app`). If the current workspace is listed, use it. If the workspace is **not** listed, treat it as not found and continue to step 3.
+3. **If no matching settings found:** Prompt the user to create one. Use AskQuestion:
 
    ```
    AskQuestion({
-     "title": "No publish settings found",
+     "title": "No Project Settings Found",
      "questions": [{
-       "id": "publish_settings",
-       "prompt": "No .publish-settings.md found for this project. How should I get publish config?",
+       "id": "project_settings",
+       "prompt": "No .project-settings.md found. This file tells skills whether to use GitHub Issues or Jira. Want me to create one?",
        "options": [
-         {"id": "create_project", "label": "Create .publish-settings.md in this project"},
-         {"id": "create_home", "label": "Create ~/.publish-settings.md (global)"},
-         {"id": "add_workspace", "label": "Add this workspace to existing ~/.publish-settings.md"},
-         {"id": "manual", "label": "Specify manually (don't save)"}
+         {"id": "github", "label": "Create for GitHub Issues (recommended for this repo)"},
+         {"id": "jira", "label": "Create for Jira"},
+         {"id": "skip", "label": "Skip — just use GitHub with current repo defaults"}
        ]
      }]
    })
    ```
 
-   - **"Create in project" or "Create in home":** Ask the user for the target system (GitHub or Jira) and required fields. Read this skill's `templates/publish-settings.md` for the template, fill in the user's values, and write to the chosen location. Then use it.
-   - **"Add this workspace":** Read `~/.publish-settings.md`, add the current workspace directory name to the Workspaces table, and write it back. Then use it.
-   - **"Specify manually":** Ask for target and required fields inline. Do not save to disk.
+   Based on the response:
+   - **"github":** Read this skill's `templates/project-settings.md` for the template. Fill in the GitHub example using the current repo name (from workspace basename) and repo URL (from `git remote get-url origin`). Write to `<workspace-root>/.project-settings.md`. Then use it.
+   - **"jira":** Ask for project key and Jira base URL. Fill in the Jira example from the template. Write to `<workspace-root>/.project-settings.md`. Then use it.
+   - **"skip":** Default to `github` target with current repo. Do not save to disk.
 
 **After resolving settings, determine the target:**
 
@@ -59,7 +59,7 @@ Keep a mapping: placeholder → actual key/number (e.g. "Ticket #1" → "#5" for
 
 #### GitHub Issues Path
 
-**Required fields from publish settings:**
+**Required fields from project settings:**
 - **Repo** — GitHub repo (default: current repo from `git remote get-url origin`). Format: `owner/repo`.
 - **Type → labels** (optional) — maps ticket types to GitHub labels (e.g. `Story → enhancement`, `Bug → bug`).
 
@@ -73,7 +73,7 @@ gh issue create \
   --label "[LABEL]"
 ```
 
-- `--label` is optional; include only if the publish settings define a type-to-label mapping for this ticket's type.
+- `--label` is optional; include only if the project settings define a type-to-label mapping for this ticket's type.
 - The body is the raw markdown from the temp file (GitHub renders markdown natively).
 
 **3b. Parse the output** for the issue URL. Extract the issue number from the URL (e.g. `https://github.com/owner/repo/issues/5` → `#5`).
@@ -84,7 +84,7 @@ gh issue create \
 
 #### Jira Path
 
-**Required fields from publish settings:**
+**Required fields from project settings:**
 - **Project Key** — Jira project key
 - **Component** — Component name and ID
 - **Sprint** — Sprint custom field and ID
@@ -134,7 +134,7 @@ ADF doc: `{"type": "doc", "version": 1, "content": [...]}`. Parse inline formatt
 
 Parse the output to extract the Jira key. If it fails after 2 retries → go to Fallback.
 
-**3e. Set component and sprint** (from publish settings):
+**3e. Set component and sprint** (from project settings):
 
 ```bash
 acli jira workitem edit --key <KEY> --component "<Component>"
@@ -197,7 +197,7 @@ Tickets are in dependency order (prerequisites first). Creating each ticket imme
 | Creating out of order | Always create in plan order so keys exist for cross-refs |
 | Not substituting placeholders | Replace "Ticket #1" etc. with real keys/numbers before creating |
 | Printing key without link | Use [KEY](url) or [#N](url) format |
-| Using Jira path for GitHub target | Check the Target field from publish settings first |
+| Using Jira path for GitHub target | Check the Target field from project settings first |
 | Raw markdown in Jira description (acli) | With acli, convert to ADF; use `--from-json` with ADF |
 | Forgetting to parse inline formatting (acli) | Split text at **bold**, links, code; apply marks |
 | Not offering fallback when creation fails | Offer temp file or retry; honor user choice |

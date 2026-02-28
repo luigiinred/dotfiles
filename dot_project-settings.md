@@ -1,6 +1,6 @@
-# Publish Settings
+# Project Settings
 
-Configuration for publishing tickets to JIRA.
+Global project settings. Skills like `dev-workflow-initialize` and `write-tickets` check this file when no project-root `.project-settings.md` exists. Only applies to workspaces listed in the Workspaces table.
 
 ## Workspaces
 
@@ -8,7 +8,15 @@ Configuration for publishing tickets to JIRA.
 |---------------------|-------|
 | mobile-app | React Native mobile app |
 
-## Fields
+## Projects
+
+### mobile-app
+
+| Field | Value | Notes |
+|-------|-------|-------|
+| **Target** | `jira` | Create tickets in Jira. |
+
+#### Jira
 
 | Field | Value | Notes |
 |-------|-------|-------|
@@ -17,23 +25,21 @@ Configuration for publishing tickets to JIRA.
 | **Sprint** | Mobile Refinement | Custom field: `customfield_10020`. Value: `17210` (sprint ID). |
 | **JIRA base URL** | https://gustohq.atlassian.net | For ticket links: `[KEY](https://gustohq.atlassian.net/browse/KEY)`. |
 
-## Issue Type Mapping
+#### Issue Type Mapping
 
-| Ticket Type | JIRA Issue Type |
+| Ticket Type | Jira Issue Type |
 |-------------|-----------------|
 | Feature/Story | Story |
 | Bug | Bug |
 | Tech Debt | Task |
 | Spike | Task |
 
-## MCP additional_fields (when using Jira MCP)
-
-When calling create issue with additional_fields, include:
+#### MCP additional_fields (when using Jira MCP)
 
 - **components:** `[{"id": "17013"}]`
 - **customfield_10020:** `17210` (sprint ID)
 
-## acli (fallback)
+#### acli (fallback)
 
 ```bash
 acli jira workitem edit --key <KEY> --component "Consumer"

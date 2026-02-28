@@ -1,13 +1,13 @@
 ---
 name: write-tickets
-description: Use when creating project tickets or issues (Jira or GitHub). Reads .publish-settings.md to determine target system. Runs a three-step pipeline (research → write → publish) using the steps in this skill's steps/ directory.
+description: Use when creating project tickets or issues (Jira or GitHub). Reads .project-settings.md to determine target system. Runs a three-step pipeline (research → write → publish) using the steps in this skill's steps/ directory.
 ---
 
 # Write Tickets
 
 ## Overview
 
-Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets or issues. Reads `.publish-settings.md` to determine whether to publish to Jira or GitHub Issues. The workflow runs three steps in sequence, each in its own **subagent**. Data is passed between steps via temp files.
+Transform unstructured inputs (meeting notes, Slack threads, rough ideas) into well-structured project tickets or issues. Reads `.project-settings.md` to determine whether to publish to Jira or GitHub Issues. The workflow runs three steps in sequence, each in its own **subagent**. Data is passed between steps via temp files.
 
 ## Pipeline
 
@@ -84,7 +84,7 @@ Read and follow the skill step file at: <absolute-path-to>/steps/publish.md
 Read the ticket manifest from /tmp/write-tickets-manifest.json to get the list
 of finalized tickets and their temp file paths.
 
-The publish-settings template is at: <absolute-path-to>/templates/publish-settings.md
+The project-settings template is at: <absolute-path-to>/templates/project-settings.md
 
 After all tickets are created, clean up all temp files:
 - /tmp/write-tickets-research.md
@@ -96,7 +96,7 @@ Return the list of created ticket/issue keys with links.
 
 ## Shared Conventions
 
-- **Publish settings:** The publish step resolves target system and fields from a `.publish-settings.md` file. Lookup order: **project root first** (`<workspace>/.publish-settings.md`), then **user home** (`~/.publish-settings.md`). The `Target` field determines the system: `github` for GitHub Issues, `jira` for Jira. See `steps/publish.md` for the full resolution logic.
+- **Project settings:** The publish step resolves target system and fields from a `.project-settings.md` file. Lookup order: **project root first** (`<workspace>/.project-settings.md`), then **user home** (`~/.project-settings.md`). If not found, the user is prompted to create one. The `Target` field determines the system: `github` for GitHub Issues, `jira` for Jira. See `steps/publish.md` for the full resolution logic.
 - **Ticket document content** is produced in the write step using this skill's `templates/` (feature, bug, tech-debt, spike) and the ticket writing rules in `steps/write.md`. The write step is target-neutral — it produces markdown that works for both Jira and GitHub.
 - **Ticket creation** is done in **`steps/publish.md`** which routes to the appropriate system based on the Target field. For GitHub: `gh issue create`. For Jira: Jira MCP or `acli`.
 - **Links:** When showing a created ticket/issue, always use a link:
