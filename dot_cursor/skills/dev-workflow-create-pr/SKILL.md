@@ -251,7 +251,7 @@ Unticketed (GitHub or no settings):
 The PR body must include the `[[[...]]]` block and a screenshot placeholder.
 
 ```bash
-gh pr create --draft --title "<type>: <ticket-ref> <short description>" --body "$(cat <<'EOF'
+gh pr create --draft --title "[<TICKET>] <type>: <short description>" --body "$(cat <<'EOF'
 <[[[...]]] block from Step 5>
 
 ---
@@ -263,21 +263,22 @@ EOF
 )"
 ```
 
-**Title format:** Use conventional commit style. Include the ticket/issue reference when available — this is critical because release notes are generated from PR titles.
+**Title format:** Use conventional commit style with the ticket/issue reference in brackets — this is critical because release notes are generated from PR titles. Check for a `pr-title-conventions` skill in the project's `.cursor/skills/` directory for repo-specific title rules.
 
-Format: `<type>: <ticket-ref> <short description>`
+**Default format:** `[TICKET] <type>: <short description>`
 
 Jira examples:
-- `feat: RETIRE-456 add portfolio rebalance alerts`
-- `fix: RNDCORE-12337 handle null dynamic type in C++ bridge`
+- `[RETIRE-456] feat: add portfolio rebalance alerts`
+- `[RNDCORE-12337] fix: handle null dynamic type in C++ bridge`
+- `[RETIRE-1884, 1885] chore: upgrade sentry and fix build` (multiple tickets, not encouraged)
 
 GitHub issue examples:
-- `feat: #5 add widget background style setting`
-- `fix: #12 handle nil placement on resize`
+- `[#5] feat: add widget background style setting`
+- `[#12] fix: handle nil placement on resize`
 
-No ticket/issue:
-- `feat: add widget background style setting`
-- `refactor: migrate drag gesture to coordinate space`
+No ticket (use placeholder or NO-TICKET):
+- `[RETIRE-1908] fix: filter auth errors from Sentry reporting` (placeholder ticket)
+- `[NO-TICKET] refactor: migrate drag gesture to coordinate space` (last resort)
 
 Type prefixes:
 
