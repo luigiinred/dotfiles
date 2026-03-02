@@ -102,9 +102,16 @@ Branch name format depends on the source:
 ### Step 5: Determine Worktree Paths
 
 - `[MAIN_WORKTREE]` = current workspace root
-- `[PROJECT_NAME]` = basename of main worktree (e.g., `AerialFrame`)
+- `[PROJECT_NAME]` = basename of main worktree (e.g., `mobile-app`)
 - `[BRANCH_NAME]` = generated branch name from Step 4
-- `[NEW_WORKTREE]` = `../[PROJECT_NAME]-[BRANCH_NAME]`
+- `[WORKTREES_DIR]` = `../worktrees/[PROJECT_NAME]` (e.g., `Developer/worktrees/mobile-app`)
+- `[NEW_WORKTREE]` = `[WORKTREES_DIR]/[BRANCH_NAME]`
+
+Ensure the worktrees directory exists:
+
+```bash
+mkdir -p [WORKTREES_DIR]
+```
 
 ### Step 6: Check Prerequisites
 
