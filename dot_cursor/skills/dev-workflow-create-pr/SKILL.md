@@ -251,7 +251,7 @@ Unticketed (GitHub or no settings):
 The PR body must include the `[[[...]]]` block and a screenshot placeholder.
 
 ```bash
-gh pr create --draft --title "[<TICKET>] <type>: <short description>" --body "$(cat <<'EOF'
+gh pr create --draft --title "<type>: <TICKET> <short description>" --body "$(cat <<'EOF'
 <[[[...]]] block from Step 5>
 
 ---
@@ -263,22 +263,23 @@ EOF
 )"
 ```
 
-**Title format:** Use conventional commit style with the ticket/issue reference in brackets — this is critical because release notes are generated from PR titles. Check for a `pr-title-conventions` skill in the project's `.cursor/skills/` directory for repo-specific title rules.
+**Title format:** Use conventional commit style with the ticket reference after the colon — this is critical because release notes are generated from PR titles. Check for a `pr-title-conventions` skill in the project's `.cursor/skills/` directory for repo-specific title rules.
 
-**Default format:** `[TICKET] <type>: <short description>`
+**Default format:** `<type>(optional-scope): TICKET-123 <short description>`
 
 Jira examples:
-- `[RETIRE-456] feat: add portfolio rebalance alerts`
-- `[RNDCORE-12337] fix: handle null dynamic type in C++ bridge`
-- `[RETIRE-1884, RETIRE-1885] chore: upgrade sentry and fix build` (multiple tickets, not encouraged)
+- `feat: RETIRE-456 add portfolio rebalance alerts`
+- `fix: RNDCORE-12337 handle null dynamic type in C++ bridge`
+- `chore(deps): RNDCORE-6547 bump bundler and rubygems`
+- `fix: RETIRE-1884, RETIRE-1885 handle nil account in balance calculation` (multiple tickets, not encouraged)
 
 GitHub issue examples:
-- `[#5] feat: add widget background style setting`
-- `[#12] fix: handle nil placement on resize`
+- `feat: #5 add widget background style setting`
+- `fix: #12 handle nil placement on resize`
 
 No ticket (use placeholder or NO-TICKET):
-- `[RETIRE-1908] fix: filter auth errors from Sentry reporting` (placeholder ticket)
-- `[NO-TICKET] refactor: migrate drag gesture to coordinate space` (last resort)
+- `chore: RETIRE-1908 add basic auth and documentation` (placeholder ticket)
+- `fix: NO-TICKET correct typo in login screen` (last resort)
 
 Type prefixes:
 
