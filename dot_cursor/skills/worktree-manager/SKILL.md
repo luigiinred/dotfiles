@@ -120,18 +120,11 @@ Dependencies: installed
 
 ### Step 8: Open in Cursor
 
-**ALWAYS use the AskQuestion tool:**
+Always open the new worktree in a new Cursor window automatically — never prompt.
 
-- Title: "Open in Cursor?"
-- Question: "Worktree created successfully at [NEW_WORKTREE]. Would you like me to open it in a new Cursor window?"
-- Options:
-  - id: "open", label: "Yes, open it"
-  - id: "skip", label: "No, I'll open it manually"
-
-Based on the response:
-
-- "open" → Run `cursor [NEW_WORKTREE]`
-- "skip" → End the workflow
+```bash
+cursor [NEW_WORKTREE]
+```
 
 ## Cleanup
 
