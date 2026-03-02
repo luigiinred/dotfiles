@@ -271,7 +271,7 @@ Jira examples:
 - `feat: RETIRE-456 add portfolio rebalance alerts`
 - `fix: RNDCORE-12337 handle null dynamic type in C++ bridge`
 - `chore(deps): RNDCORE-6547 bump bundler and rubygems`
-- `fix: RETIRE-1884, RETIRE-1885 handle nil account in balance calculation` (multiple tickets, not encouraged)
+- `fix: RETIRE-1884 RETIRE-1885 handle nil account in balance calculation` (multiple tickets, not encouraged)
 
 GitHub issue examples:
 - `feat: #5 add widget background style setting`
