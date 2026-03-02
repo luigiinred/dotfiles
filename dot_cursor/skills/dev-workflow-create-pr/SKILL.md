@@ -270,7 +270,7 @@ EOF
 Jira examples:
 - `[RETIRE-456] feat: add portfolio rebalance alerts`
 - `[RNDCORE-12337] fix: handle null dynamic type in C++ bridge`
-- `[RETIRE-1884, 1885] chore: upgrade sentry and fix build` (multiple tickets, not encouraged)
+- `[RETIRE-1884, RETIRE-1885] chore: upgrade sentry and fix build` (multiple tickets, not encouraged)
 
 GitHub issue examples:
 - `[#5] feat: add widget background style setting`
