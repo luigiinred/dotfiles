@@ -14,9 +14,9 @@ Analyze the current branch's diff against its base, determine which screens are 
 
 ## Workflow
 
-### Step 1: Determine Changed Screens
+### Step 1: Analyze Diff — Screens and Accounts
 
-Analyze the git diff to identify which screens or UI areas were affected.
+Analyze the git diff to identify which screens are affected and which test accounts are needed.
 
 ```bash
 git diff main...HEAD --name-only
@@ -24,9 +24,7 @@ git diff main...HEAD --name-only
 
 If on a branch created from another feature branch, detect the parent (see `dev-workflow-create-pr` for parent-branch detection logic) and diff against that instead.
 
-#### Mapping Rules
-
-Map changed files to screens using these heuristics:
+#### 1a. Map files to screens
 
 | Changed file pattern | Affected screen |
 |---|---|
@@ -50,23 +48,56 @@ Map changed files to screens using these heuristics:
 | `auth` | Login screen (pre-auth) |
 | `onboarding` | Onboarding flow (special entry) |
 
-Build a list of screens to capture. If more than 5 screens are affected, prioritize:
+If more than 5 screens are affected, prioritize:
 1. Directly changed screen files
 2. Screens in the same feature area as changed components
 3. Skip shared-component consumers unless the change is visually significant
 
-### Step 2: Confirm Targets
+#### 1b. Determine test accounts
 
-Present the identified screens using AskQuestion:
+Pick the test account(s) by examining which data shapes / account types the changed code touches. Also check existing maestro flows for the affected screens — they already specify the right `DEFAULT_USERNAME`.
+
+```bash
+# Find existing flows for the affected screens and extract their test accounts
+grep -r 'DEFAULT_USERNAME' maestro/flows/<feature-area>/
+```
+
+**Test account reference:**
+
+| Account | Username | Use when |
+|---|---|---|
+| Single 401k (Defcon) | `single-defcon@guideline.test` | Default for most screens |
+| Multiple 401k (Defcon) | `multiple-defcon@guideline.test` | Multi-plan 401k logic, account switcher |
+| Multiple account types | `multiple-accounts@guideline.test` | Account chooser, mixed account views |
+| Personal IRA | `personal-ira@guideline.test` | IRA-specific screens, IRA contributions |
+| SEP IRA | `sep-ira@guideline.test` | SEP IRA plan details |
+| IRA + HSA | `ira-and-hsa@guideline.test` | Mixed unsupported account handling |
+| Defcon + HSA | `defcon-with-hsa@guideline.test` | HSA-related dashboard views |
+| Defcon + Cash | `defcon-and-cash@guideline.test` | Cash account dashboard views |
+| Year-in-review | `year-in-review@guideline.test` | Annual statements |
+
+**Selection heuristics:**
+
+- If the diff touches IRA-specific code (file paths contain `ira`, `Ira`, or IRA type checks), use `personal-ira@guideline.test`
+- If the diff touches account switching, account selectors, or multi-account layouts, use `multiple-accounts@guideline.test`
+- If the diff touches SEP IRA, use `sep-ira@guideline.test`
+- If the diff is generic / shared UI, use `single-defcon@guideline.test` (the default)
+- If the change affects rendering that varies by account type, capture with **multiple accounts** to cover the most variation in one login
+
+When multiple account types are needed (e.g., a shared component that renders differently per account type), plan separate capture passes — one login per account type.
+
+### Step 2: Confirm Targets and Accounts
+
+Present the identified screens and test accounts using AskQuestion:
 
 - Title: "Screens to Validate"
-- Question: "Based on the diff, these screens may be affected:\n\n[list]\n\nHow should I proceed?"
+- Question: "Based on the diff, here's the capture plan:\n\n**Screens:**\n[list of screens]\n\n**Test account(s):**\n[account(s) and why]\n\nHow should I proceed?"
 - Options:
   - id: "all", label: "Screenshot all of them"
   - id: "adjust", label: "Let me adjust the list"
   - id: "skip", label: "Skip validation"
 
-If "adjust": ask the user conversationally which screens to add/remove.
+If "adjust": ask the user conversationally which screens to add/remove and which accounts to use.
 If "skip": end the workflow.
 
 ### Step 3: Capture Screenshots
