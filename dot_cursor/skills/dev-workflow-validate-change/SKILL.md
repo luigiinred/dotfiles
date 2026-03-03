@@ -7,6 +7,8 @@ description: Visually validate code changes by analyzing the git diff, identifyi
 
 Analyze the current branch's diff against its base, determine which screens are affected, navigate to each one on a live device via Maestro, and capture screenshots for visual validation.
 
+All captured screenshots and assets are saved to `./maestro/assets/<branchname>/`.
+
 ## Prerequisites
 
 - A device/simulator must be running with the **current build** installed (the build should include the changes being validated)
@@ -19,6 +21,9 @@ Analyze the current branch's diff against its base, determine which screens are 
 Analyze the git diff to identify which screens are affected and which test accounts are needed.
 
 ```bash
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+ASSETS_DIR="./maestro/assets/${BRANCH_NAME}"
+mkdir -p "${ASSETS_DIR}"
 git diff main...HEAD --name-only
 ```
 
@@ -91,7 +96,7 @@ When multiple account types are needed (e.g., a shared component that renders di
 Present the identified screens and test accounts using AskQuestion:
 
 - Title: "Screens to Validate"
-- Question: "Based on the diff, here's the capture plan:\n\n**Screens:**\n[list of screens]\n\n**Test account(s):**\n[account(s) and why]\n\nHow should I proceed?"
+- Question: "Based on the diff, here's the capture plan:\n\n**Screens:**\n[list of screens]\n\n**Test account(s):**\n[account(s) and why]\n\n**Output directory:** `./maestro/assets/<branchname>/`\n\nHow should I proceed?"
 - Options:
   - id: "all", label: "Screenshot all of them"
   - id: "adjust", label: "Let me adjust the list"
@@ -110,6 +115,7 @@ Use the **maestro-take-screenshots** skill. Provide it:
 - **Target**: the screen name
 - **Capture type**: screenshot
 - **Output name**: `validate-<screen-name>`
+- **Output directory**: `./maestro/assets/<branchname>/`
 
 #### 3b. If the navigation path is unclear
 
@@ -136,12 +142,14 @@ PortfolioScreen           | Captured
 SettingsScreen            | Captured (via maestro-explore)
 PlanDetailScreen          | Skipped — couldn't navigate
 
-Screenshots saved to .maestro/ directory.
+Screenshots saved to maestro/assets/<branchname>/.
 ```
 
 Show each screenshot to the user inline (the maestro skills will handle displaying them).
 
 If any screens couldn't be reached, note them and suggest the user check manually.
+
+Ensure `maestro/assets/` is added to `.gitignore` so captured screenshots are not committed to the repository.
 
 ### Step 5: Offer to Create Maestro Test File
 
