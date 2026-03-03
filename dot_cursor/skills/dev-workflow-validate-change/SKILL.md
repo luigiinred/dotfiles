@@ -143,6 +143,49 @@ Show each screenshot to the user inline (the maestro skills will handle displayi
 
 If any screens couldn't be reached, note them and suggest the user check manually.
 
+### Step 5: Offer to Create Maestro Test File
+
+After presenting results, ask the user whether to save the full validation flow as a reusable Maestro test file using AskQuestion:
+
+- Title: "Save as Maestro Test?"
+- Question: "Want me to create a Maestro test file that replays this entire validation flow (login, navigate to each screen, take screenshots)?"
+- Options:
+  - id: "yes", label: "Yes, create the test file"
+  - id: "no", label: "No, I'm done"
+
+If "yes":
+
+1. Build a single `.yml` flow file that reproduces the full validation run:
+   - Login with the test account and backend used during validation
+   - Navigate to each captured screen in order
+   - Take a screenshot at each screen (`takeScreenshot: validate-<screen-name>`)
+2. Name the file based on the branch or ticket: `maestro/flows/validate/<branch-or-ticket-name>.yml`
+   - Create the `maestro/flows/validate/` directory if it doesn't exist
+3. Add the `ignore` tag so it won't run in CI test suites
+4. Use relative paths for utility flow references (e.g., `../../utils/login.yml`)
+5. Show the user the created file path
+
+Example output:
+
+```yaml
+appId: com.guideline.mobile
+tags:
+  - ignore
+---
+- runFlow:
+    file: ../../utils/login.yml
+    env:
+      USERNAME: personal-ira@guideline.test
+      BUILD_ENV: staging
+- takeScreenshot: validate-dashboard
+- tapOn:
+    id: portfolio-screen-tab
+- waitForAnimationToEnd
+- takeScreenshot: validate-portfolio
+```
+
+If "no": end the workflow.
+
 ## Notes
 
 - This skill is an orchestrator — all device interaction is handled by `maestro-take-screenshots` and `maestro-explore`.
