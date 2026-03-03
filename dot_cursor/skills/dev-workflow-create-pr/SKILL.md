@@ -306,7 +306,50 @@ Draft PR created successfully! 🎉
 
 Example output: "Draft PR created successfully! 🎉\n\n[View Draft PR #2640](https://github.com/guideline-app/mobile-app/pull/2640)"
 
-### Step 8: Offer to Start Review
+### Step 8: Attach Screenshots (Optional)
+
+After reporting the PR URL, **ALWAYS use the AskQuestion tool:**
+
+- Title: "Add Screenshots?"
+- Question: "Do you want to attach screenshots to the PR?"
+- Options:
+  - id: "upload", label: "Yes, I have screenshots to attach"
+  - id: "no-visual", label: "No visual changes"
+  - id: "later", label: "I'll add them manually later"
+
+**If "upload":**
+
+1. Ask the user for the image file path(s) (one or more).
+2. For each image, run the upload script bundled with this skill:
+
+```bash
+~/.cursor/skills/dev-workflow-create-pr/scripts/upload-screenshot.sh "<image-path>" "<alt-text>"
+```
+
+The script uploads the image as a GitHub release asset under a `_pr-assets` tag and outputs a markdown image reference like:
+
+```
+![Screenshot](https://github.com/owner/repo/releases/download/_pr-assets/screenshot-20260303-141500-12345.png)
+```
+
+3. Collect all the markdown image references from the script output.
+4. Update the PR body to replace the screenshot placeholder with the actual images:
+
+```bash
+# Get current PR body
+BODY=$(gh pr view --json body --jq '.body')
+
+# Replace the placeholder with actual screenshots
+# The placeholder is: _No visual changes_
+NEW_BODY=$(echo "$BODY" | sed 's/_No visual changes_/<collected markdown image references>/')
+
+# Update the PR
+gh pr edit --body "$NEW_BODY"
+```
+
+**If "no-visual" or "later":** Continue to Step 9.
+
+### Step 9: Offer to Start Review
 
 After reporting the clickable PR URL, **ALWAYS use the AskQuestion tool:**
 
@@ -333,6 +376,7 @@ PR Creation Progress:
 - [ ] Generated PR description with [[[...]]] block
 - [ ] Created draft PR with gh CLI
 - [ ] Reported PR URL as clickable markdown link
+- [ ] Offered to attach screenshots (uploaded via upload-screenshot.sh)
 - [ ] Offered to start PR review
 ```
 
@@ -392,4 +436,4 @@ And consider if the branch needs to be rebased before creating the PR.
 
 - Always push changes before creating PR
 - Review the generated description for accuracy before the PR is created
-- For visual changes, remind the user to add screenshots after PR creation
+- For visual changes, use `upload-screenshot.sh` to attach images directly from the CLI
