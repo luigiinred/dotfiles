@@ -18,6 +18,8 @@ dev-workflow-start-work  (includes dev-workflow-prepare-commit when atomic)
         ↓
 dev-workflow-create-pr
         ↓
+dev-workflow-validate-change  (optional)
+        ↓
 dev-workflow-review-pr
 ```
 
@@ -87,14 +89,34 @@ Use the `dev-workflow-create-pr` skill to push and open the pull request.
 - **Autopilot**: Push if needed. Generate PR description and create the PR. Skip "Start PR Review?" (always yes). Proceed directly to Step 4.
 - **Pair**: All prompts go to the user as normal.
 
-## Step 4: Review PR
+## Step 4: Validate Change (Optional)
+
+Offer to visually validate the changes on a live device using the `dev-workflow-validate-change` skill.
+
+**ALWAYS use the AskQuestion tool:**
+
+- Title: "Visual Validation"
+- Question: "Would you like to validate your changes visually on a device? This will analyze the diff, navigate to affected screens via Maestro, and take screenshots."
+- Options:
+  - id: "validate", label: "Yes, take screenshots of affected screens"
+  - id: "skip", label: "Skip validation"
+
+Based on the response:
+
+- "validate" → Use the `dev-workflow-validate-change` skill. It analyzes the diff, identifies affected screens, and delegates to the `maestro-take-screenshots` / `maestro-explore` skills.
+- "skip" → Proceed to Step 5.
+
+- **Autopilot**: Skip this step (default: skip).
+- **Pair**: Always prompt.
+
+## Step 5: Review PR
 
 Use the `dev-workflow-review-pr` skill to review the pull request.
 
 - **Autopilot**: Review the current branch's PR automatically. Skip the "Which PR?" prompt.
 - **Pair**: All prompts go to the user as normal.
 
-## Step 5: Done
+## Step 6: Done
 
 Report the final status:
 
