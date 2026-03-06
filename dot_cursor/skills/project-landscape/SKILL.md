@@ -1,6 +1,6 @@
 ---
 name: project-landscape
-description: Provides a map of all local projects, their tech stacks, dependencies, and inter-system relationships. Use when the user asks about project architecture, cross-repo dependencies, how systems connect, which repo owns what, or needs to explore another codebase. Also use when the user mentions Gusto, Guideline, Zenpayroll, mobile-app, mb-ios, or asks "where does X live?"
+description: Provides a map of all local projects, their tech stacks, dependencies, and inter-system relationships. Use when the user asks about project architecture, cross-repo dependencies, how systems connect, which repo owns what, or needs to explore another codebase. Also use when the user mentions Gusto, Guideline, Zenpayroll, mobile-app, mb-ios, mb-android, or asks "where does X live?"
 ---
 
 # Project Landscape
@@ -18,6 +18,7 @@ graph TB
         mobileApp["mobile-app<br/><i>React Native / Expo</i><br/>~/Developer/mobile-app/"]
         zpFe["Zenpayroll — Frontend<br/><i>JS / TypeScript · Yarn 4</i><br/>~/Developer/Zenpayroll/js/"]
         mbIos["mb-ios<br/><i>Swift / Xcode</i><br/>~/Developer/mb-ios/"]
+        mbAndroid["mb-android<br/><i>Kotlin / Android</i><br/>~/Developer/mb-android/"]
     end
 
     subgraph be ["Backends"]
@@ -25,12 +26,13 @@ graph TB
         zpBe["Zenpayroll — Backend<br/><i>Ruby on Rails + Sorbet</i><br/>~/Developer/Zenpayroll/app/"]
     end
 
-    users --> appFe & mobileApp & zpFe & mbIos
+    users --> appFe & mobileApp & zpFe & mbIos & mbAndroid
 
     appFe -- "GraphQL + REST" --> appBe
     mobileApp -- "GraphQL API" --> appBe
     zpFe -- "REST API" --> zpBe
     mbIos -- "REST / GraphQL" --> zpBe
+    mbAndroid -- "REST / GraphQL" --> zpBe
 
     appBe <-- "Payroll sync · webhooks · retirement plan mgmt" --> zpBe
 ```
@@ -43,6 +45,7 @@ graph TB
 | `mobile-app` | `app` Backend | GraphQL API |
 | `Zenpayroll` Frontend | `Zenpayroll` Backend | REST API |
 | `mb-ios` | `Zenpayroll` Backend | REST / GraphQL API |
+| `mb-android` | `Zenpayroll` Backend | REST / GraphQL API |
 | `app` Backend | `Zenpayroll` Backend | Payroll data sync, employer/participant integrations |
 | `Zenpayroll` Backend | `app` Backend | Webhooks, retirement plan management |
 
@@ -94,6 +97,15 @@ graph TB
 | **Stack** | Swift, Xcode |
 | **Architecture** | Modular Swift packages (AddressKit, GustoLoginKit, GustoBenefits, etc.) |
 | **Key dirs** | `Gus/`, `AddressKit/`, `GustoLoginKit/`, `FeatureCoordination/` |
+
+### mb-android — Gusto Android App
+
+| Property | Value |
+|----------|-------|
+| **Path** | `~/Developer/mb-android` |
+| **Repo** | [Gusto/mb-android](https://github.com/Gusto/mb-android) |
+| **Stack** | Kotlin, Android |
+| **Key dirs** | TBD (repo not fully checked out yet) |
 
 ## Exploring Other Codebases
 
