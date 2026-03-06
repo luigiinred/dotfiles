@@ -11,35 +11,21 @@ All projects live in `~/Developer/`. This skill documents the system context (C1
 
 ```mermaid
 graph TB
-    glUsers([Guideline Users])
-    gustoUsers([Gusto Users])
+    users([Users])
 
-    subgraph gl ["Guideline Platform"]
-        direction TB
-        subgraph glFe ["Frontends"]
-            appFe["app — Web Frontend<br/><i>React / TypeScript · Nx</i><br/>~/Developer/app/client/"]
-            mobileApp["mobile-app<br/><i>React Native / Expo</i><br/>~/Developer/mobile-app/"]
-        end
-        subgraph glBe ["Backend"]
-            appBe["app — Backend<br/><i>Ruby on Rails</i><br/><i>Engines: defcon, ira, custodial</i><br/>~/Developer/app/app/"]
-        end
-        glFe --> glBe
+    subgraph fe ["Frontends"]
+        appFe["app — Web Frontend<br/><i>React / TypeScript · Nx</i><br/>~/Developer/app/client/"]
+        mobileApp["mobile-app<br/><i>React Native / Expo</i><br/>~/Developer/mobile-app/"]
+        zpFe["Zenpayroll — Frontend<br/><i>JS / TypeScript · Yarn 4</i><br/>~/Developer/Zenpayroll/js/"]
+        mbIos["mb-ios<br/><i>Swift / Xcode</i><br/>~/Developer/mb-ios/"]
     end
 
-    subgraph gusto ["Gusto Platform"]
-        direction TB
-        subgraph gustoFe ["Frontends"]
-            zpFe["Zenpayroll — Frontend<br/><i>JS / TypeScript · Yarn 4</i><br/>~/Developer/Zenpayroll/js/"]
-            mbIos["mb-ios<br/><i>Swift / Xcode</i><br/>~/Developer/mb-ios/"]
-        end
-        subgraph gustoBe ["Backend"]
-            zpBe["Zenpayroll — Backend<br/><i>Ruby on Rails + Sorbet</i><br/>~/Developer/Zenpayroll/app/"]
-        end
-        gustoFe --> gustoBe
+    subgraph be ["Backends"]
+        appBe["app — Backend<br/><i>Ruby on Rails</i><br/><i>Engines: defcon, ira, custodial</i><br/>~/Developer/app/app/"]
+        zpBe["Zenpayroll — Backend<br/><i>Ruby on Rails + Sorbet</i><br/>~/Developer/Zenpayroll/app/"]
     end
 
-    glUsers --> appFe & mobileApp
-    gustoUsers --> zpFe & mbIos
+    users --> appFe & mobileApp & zpFe & mbIos
 
     appFe -- "GraphQL + REST" --> appBe
     mobileApp -- "GraphQL API" --> appBe
