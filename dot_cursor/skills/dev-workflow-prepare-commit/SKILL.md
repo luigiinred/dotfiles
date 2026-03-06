@@ -171,7 +171,7 @@ git diff --staged
 **Guidelines:**
 
 - Keep the message short and focused on the main idea
-- Maximum 80 characters total
+- Maximum 72 characters total (enforced by commitlint `header-max-length`)
 - Do NOT include scope in parentheses (no `feat(auth):`, just `feat:`)
 - Use imperative mood ("add feature" not "added feature")
 - Focus on the "what" at a high level, not implementation details
