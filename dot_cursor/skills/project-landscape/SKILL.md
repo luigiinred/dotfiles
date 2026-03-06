@@ -146,6 +146,14 @@ These contain dev commands, architecture overviews, and testing instructions spe
 
 For thorough cross-repo investigation, launch an `explore` subagent scoped to the target repo directory. This avoids polluting the current conversation context.
 
+**Important:** Subagents do NOT automatically load skills or rules from the target repo. When launching a subagent to explore another codebase, always include these instructions in the prompt:
+
+1. First read `~/Developer/<repo>/AGENTS.md`, `CLAUDE.md`, or `README.md` for project conventions
+2. Check `~/Developer/<repo>/.cursor/skills/` and `~/Developer/<repo>/.claude/skills/` for available skills relevant to the task
+3. Read any relevant skill files found before proceeding with the investigation
+
+This ensures the subagent follows the target project's conventions and doesn't miss domain-specific patterns.
+
 ## Common Cross-Repo Tasks
 
 | Task | Where to look |
