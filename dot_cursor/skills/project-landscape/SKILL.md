@@ -13,38 +13,34 @@ All projects live in `~/Developer/`. This skill documents the system context (C1
 C4Context
     title System Context Diagram — Guideline & Gusto
 
-    Person(employer, "Employers", "Companies offering retirement benefits")
-    Person(participant, "Participants", "Employees enrolled in retirement plans")
-    Person(gustoAdmin, "Gusto Admins", "Gusto internal operations")
-    Person(glAdmin, "Guideline Admins", "Guideline internal operations")
+    Person(glUsers, "Guideline Users", "Employers, participants, admins")
+    Person(gustoUsers, "Gusto Users", "Employees, admins")
 
     Enterprise_Boundary(gl, "Guideline Platform") {
         System(appFe, "app — Web Frontend", "React / TypeScript (Nx)<br/>~/Developer/app/client/")
-        System(appBe, "app — Backend", "Ruby on Rails<br/>Engines: defcon, ira, custodial<br/>~/Developer/app/app/")
         System(mobileApp, "mobile-app", "Guideline Mobile App<br/>React Native / Expo<br/>~/Developer/mobile-app/")
+        System(appBe, "app — Backend", "Ruby on Rails<br/>Engines: defcon, ira, custodial<br/>~/Developer/app/app/")
     }
 
     Enterprise_Boundary(gusto, "Gusto Platform") {
         System(zpFe, "Zenpayroll — Frontend", "JS / TypeScript (Yarn 4)<br/>~/Developer/Zenpayroll/js/")
-        System(zpBe, "Zenpayroll — Backend", "Ruby on Rails + Sorbet<br/>~/Developer/Zenpayroll/app/")
         System(mbIos, "mb-ios", "Gusto iOS App<br/>Swift / Xcode<br/>~/Developer/mb-ios/")
+        System(zpBe, "Zenpayroll — Backend", "Ruby on Rails + Sorbet<br/>~/Developer/Zenpayroll/app/")
     }
 
-    Rel(employer, appFe, "Manages plans via web")
-    Rel(participant, appFe, "Enrolls, contributes via web")
-    Rel(participant, mobileApp, "Mobile access")
-    Rel(gustoAdmin, zpFe, "Manages payroll via web")
-    Rel(glAdmin, appFe, "Admin operations")
+    Rel_D(glUsers, appFe, "Web")
+    Rel_D(glUsers, mobileApp, "Mobile")
+    Rel_D(gustoUsers, zpFe, "Web")
+    Rel_D(gustoUsers, mbIos, "Mobile")
 
-    Rel(appFe, appBe, "GraphQL + REST")
-    Rel(mobileApp, appBe, "GraphQL API")
-    Rel(zpFe, zpBe, "REST API")
-    Rel(mbIos, zpBe, "REST / GraphQL API")
+    Rel_D(appFe, appBe, "GraphQL + REST")
+    Rel_D(mobileApp, appBe, "GraphQL API")
+    Rel_D(zpFe, zpBe, "REST API")
+    Rel_D(mbIos, zpBe, "REST / GraphQL")
 
-    Rel(appBe, zpBe, "Payroll data sync, employer/participant integrations")
-    Rel(zpBe, appBe, "Webhooks, retirement plan management")
+    Rel_R(appBe, zpBe, "Payroll sync, webhooks, retirement plan mgmt")
 
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
+    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
 ```
 
 ### Key Relationships
