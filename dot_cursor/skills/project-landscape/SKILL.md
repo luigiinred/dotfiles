@@ -30,10 +30,6 @@ C4Context
         System(mbIos, "mb-ios", "Gusto iOS App<br/>Swift / Xcode<br/>~/Developer/mb-ios/")
     }
 
-    System_Ext(drivewealth, "DriveWealth", "Brokerage provider")
-    System_Ext(apex, "Apex", "Custodian")
-    System_Ext(payments, "Payment Processors", "Banks, tax agencies, benefits providers")
-
     Rel(employer, appFe, "Manages plans via web")
     Rel(participant, appFe, "Enrolls, contributes via web")
     Rel(participant, mobileApp, "Mobile access")
@@ -47,10 +43,6 @@ C4Context
 
     Rel(appBe, zpBe, "Payroll data sync, employer/participant integrations")
     Rel(zpBe, appBe, "Webhooks, retirement plan management")
-
-    Rel(appBe, drivewealth, "Brokerage operations")
-    Rel(appBe, apex, "Custodian operations")
-    Rel(zpBe, payments, "Payroll processing")
 
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
 ```
