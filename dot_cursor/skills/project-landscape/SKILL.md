@@ -10,37 +10,43 @@ All projects live in `~/Developer/`. This skill documents the system context (C1
 ## C1 Context Diagram
 
 ```mermaid
-C4Context
-    title System Context Diagram — Guideline & Gusto
+graph TB
+    glUsers([Guideline Users])
+    gustoUsers([Gusto Users])
 
-    Person(glUsers, "Guideline Users", "Employers, participants, admins")
-    Person(gustoUsers, "Gusto Users", "Employees, admins")
+    subgraph gl ["Guideline Platform"]
+        direction TB
+        subgraph glFe ["Frontends"]
+            appFe["app — Web Frontend<br/><i>React / TypeScript · Nx</i><br/>~/Developer/app/client/"]
+            mobileApp["mobile-app<br/><i>React Native / Expo</i><br/>~/Developer/mobile-app/"]
+        end
+        subgraph glBe ["Backend"]
+            appBe["app — Backend<br/><i>Ruby on Rails</i><br/><i>Engines: defcon, ira, custodial</i><br/>~/Developer/app/app/"]
+        end
+        glFe --> glBe
+    end
 
-    Enterprise_Boundary(gl, "Guideline Platform") {
-        System(appFe, "app — Web Frontend", "React / TypeScript (Nx)<br/>~/Developer/app/client/")
-        System(mobileApp, "mobile-app", "Guideline Mobile App<br/>React Native / Expo<br/>~/Developer/mobile-app/")
-        System(appBe, "app — Backend", "Ruby on Rails<br/>Engines: defcon, ira, custodial<br/>~/Developer/app/app/")
-    }
+    subgraph gusto ["Gusto Platform"]
+        direction TB
+        subgraph gustoFe ["Frontends"]
+            zpFe["Zenpayroll — Frontend<br/><i>JS / TypeScript · Yarn 4</i><br/>~/Developer/Zenpayroll/js/"]
+            mbIos["mb-ios<br/><i>Swift / Xcode</i><br/>~/Developer/mb-ios/"]
+        end
+        subgraph gustoBe ["Backend"]
+            zpBe["Zenpayroll — Backend<br/><i>Ruby on Rails + Sorbet</i><br/>~/Developer/Zenpayroll/app/"]
+        end
+        gustoFe --> gustoBe
+    end
 
-    Enterprise_Boundary(gusto, "Gusto Platform") {
-        System(zpFe, "Zenpayroll — Frontend", "JS / TypeScript (Yarn 4)<br/>~/Developer/Zenpayroll/js/")
-        System(mbIos, "mb-ios", "Gusto iOS App<br/>Swift / Xcode<br/>~/Developer/mb-ios/")
-        System(zpBe, "Zenpayroll — Backend", "Ruby on Rails + Sorbet<br/>~/Developer/Zenpayroll/app/")
-    }
+    glUsers --> appFe & mobileApp
+    gustoUsers --> zpFe & mbIos
 
-    Rel_D(glUsers, appFe, "Web")
-    Rel_D(glUsers, mobileApp, "Mobile")
-    Rel_D(gustoUsers, zpFe, "Web")
-    Rel_D(gustoUsers, mbIos, "Mobile")
+    appFe -- "GraphQL + REST" --> appBe
+    mobileApp -- "GraphQL API" --> appBe
+    zpFe -- "REST API" --> zpBe
+    mbIos -- "REST / GraphQL" --> zpBe
 
-    Rel_D(appFe, appBe, "GraphQL + REST")
-    Rel_D(mobileApp, appBe, "GraphQL API")
-    Rel_D(zpFe, zpBe, "REST API")
-    Rel_D(mbIos, zpBe, "REST / GraphQL")
-
-    Rel_R(appBe, zpBe, "Payroll sync, webhooks, retirement plan mgmt")
-
-    UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="2")
+    appBe <-- "Payroll sync · webhooks · retirement plan mgmt" --> zpBe
 ```
 
 ### Key Relationships
