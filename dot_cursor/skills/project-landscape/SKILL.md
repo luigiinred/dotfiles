@@ -19,33 +19,38 @@ C4Context
     Person(glAdmin, "Guideline Admins", "Guideline internal operations")
 
     Enterprise_Boundary(gl, "Guideline Platform") {
-        System(app, "app", "Guideline Monorepo<br/>Rails + React/TS (Nx)<br/>github.com/guideline-app/app")
-        System(mobileApp, "mobile-app", "Guideline Mobile App<br/>React Native / Expo<br/>github.com/guideline-app/mobile-app")
+        System(appFe, "app — Web Frontend", "React / TypeScript (Nx)<br/>~/Developer/app/client/")
+        System(appBe, "app — Backend", "Ruby on Rails<br/>Engines: defcon, ira, custodial<br/>~/Developer/app/app/")
+        System(mobileApp, "mobile-app", "Guideline Mobile App<br/>React Native / Expo<br/>~/Developer/mobile-app/")
     }
 
     Enterprise_Boundary(gusto, "Gusto Platform") {
-        System(zenpayroll, "Zenpayroll", "Gusto Backend<br/>Rails monolith<br/>github.com/Gusto/zenpayroll")
-        System(mbIos, "mb-ios", "Gusto iOS App<br/>Swift / Xcode<br/>github.com/Gusto/mb-ios")
+        System(zpFe, "Zenpayroll — Frontend", "JS / TypeScript (Yarn 4)<br/>~/Developer/Zenpayroll/js/")
+        System(zpBe, "Zenpayroll — Backend", "Ruby on Rails + Sorbet<br/>~/Developer/Zenpayroll/app/")
+        System(mbIos, "mb-ios", "Gusto iOS App<br/>Swift / Xcode<br/>~/Developer/mb-ios/")
     }
 
     System_Ext(drivewealth, "DriveWealth", "Brokerage provider")
     System_Ext(apex, "Apex", "Custodian")
     System_Ext(payments, "Payment Processors", "Banks, tax agencies, benefits providers")
 
-    Rel(employer, app, "Manages plans via web")
-    Rel(participant, app, "Enrolls, contributes via web")
+    Rel(employer, appFe, "Manages plans via web")
+    Rel(participant, appFe, "Enrolls, contributes via web")
     Rel(participant, mobileApp, "Mobile access")
-    Rel(gustoAdmin, zenpayroll, "Manages payroll")
-    Rel(glAdmin, app, "Admin operations")
+    Rel(gustoAdmin, zpFe, "Manages payroll via web")
+    Rel(glAdmin, appFe, "Admin operations")
 
-    Rel(mobileApp, app, "GraphQL API")
-    Rel(app, zenpayroll, "Payroll data sync, employer/participant integrations")
-    Rel(zenpayroll, app, "Webhooks, retirement plan management")
-    Rel(mbIos, zenpayroll, "REST/GraphQL API")
+    Rel(appFe, appBe, "GraphQL + REST")
+    Rel(mobileApp, appBe, "GraphQL API")
+    Rel(zpFe, zpBe, "REST API")
+    Rel(mbIos, zpBe, "REST / GraphQL API")
 
-    Rel(app, drivewealth, "Brokerage operations")
-    Rel(app, apex, "Custodian operations")
-    Rel(zenpayroll, payments, "Payroll processing")
+    Rel(appBe, zpBe, "Payroll data sync, employer/participant integrations")
+    Rel(zpBe, appBe, "Webhooks, retirement plan management")
+
+    Rel(appBe, drivewealth, "Brokerage operations")
+    Rel(appBe, apex, "Custodian operations")
+    Rel(zpBe, payments, "Payroll processing")
 
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
 ```
@@ -54,11 +59,12 @@ C4Context
 
 | From | To | Integration |
 |------|----|-------------|
-| `mobile-app` | `app` | GraphQL API (mobile client → Guideline backend) |
-| `app` (React) | `app` (Rails) | GraphQL + REST (same monorepo, frontend → backend) |
-| `app` | `Zenpayroll` | Payroll data sync, employer/participant integrations |
-| `mb-ios` | `Zenpayroll` | REST/GraphQL API (iOS client → Gusto backend) |
-| `Zenpayroll` | `app` | Webhooks, API calls for retirement plan management |
+| `app` Web Frontend | `app` Backend | GraphQL + REST (same monorepo) |
+| `mobile-app` | `app` Backend | GraphQL API |
+| `Zenpayroll` Frontend | `Zenpayroll` Backend | REST API |
+| `mb-ios` | `Zenpayroll` Backend | REST / GraphQL API |
+| `app` Backend | `Zenpayroll` Backend | Payroll data sync, employer/participant integrations |
+| `Zenpayroll` Backend | `app` Backend | Webhooks, retirement plan management |
 
 ## Project Registry
 
