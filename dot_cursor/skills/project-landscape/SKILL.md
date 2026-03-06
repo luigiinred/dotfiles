@@ -14,15 +14,15 @@ graph TB
     users([Users])
 
     subgraph fe ["Frontends"]
-        appFe["app — Web Frontend<br/><i>React / TypeScript · Nx</i><br/>~/Developer/app/client/"]
-        mobileApp["mobile-app<br/><i>React Native / Expo</i><br/>~/Developer/mobile-app/"]
+        appFe["app — Web Frontend<br/><i>React / TypeScript · Nx</i><br/><i>Retirement</i><br/>~/Developer/app/client/"]
+        mobileApp["mobile-app<br/><i>React Native / Expo</i><br/><i>Retirement</i><br/>~/Developer/mobile-app/"]
         zpFe["Zenpayroll — Frontend<br/><i>JS / TypeScript · Yarn 4</i><br/>~/Developer/Zenpayroll/js/"]
         mbIos["mb-ios<br/><i>Swift / Xcode</i><br/>~/Developer/mb-ios/"]
         mbAndroid["mb-android<br/><i>Kotlin / Android</i><br/>~/Developer/mb-android/"]
     end
 
     subgraph be ["Backends"]
-        appBe["app — Backend<br/><i>Ruby on Rails</i><br/><i>Engines: defcon, ira, custodial</i><br/>~/Developer/app/app/"]
+        appBe["app — Backend<br/><i>Ruby on Rails</i><br/><i>Retirement · Engines: defcon, ira, custodial</i><br/>~/Developer/app/app/"]
         zpBe["Zenpayroll — Backend<br/><i>Ruby on Rails + Sorbet</i><br/>~/Developer/Zenpayroll/app/"]
     end
 
