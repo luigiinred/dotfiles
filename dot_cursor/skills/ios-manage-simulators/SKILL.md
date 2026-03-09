@@ -31,14 +31,27 @@ xcrun simctl list devices --json
 xcrun simctl list devices | grep "iPhone 17 Pro"
 ```
 
+## Naming Convention
+
+Derive the simulator name from the git remote so devices are project-scoped:
+
+```bash
+PROJECT=$(git remote get-url origin | sed 's/.*\///' | sed 's/\.git$//')
+# e.g. "PhotoShoot"
+```
+
+Use `$PROJECT` as the device name in all create/clone commands below.
+
 ## Create
 
 ```bash
+PROJECT=$(git remote get-url origin | sed 's/.*\///' | sed 's/\.git$//')
+
 # xcrun simctl create <name> <device-type> <runtime>
-xcrun simctl create "My iPhone" "iPhone 17 Pro" "iOS 26.2"
+xcrun simctl create "$PROJECT" "iPhone 17 Pro" "iOS 26.2"
 
 # Using identifier strings instead of display names
-xcrun simctl create "My iPhone" \
+xcrun simctl create "$PROJECT" \
   com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro \
   com.apple.CoreSimulator.SimRuntime.iOS-26-2
 ```
@@ -46,7 +59,8 @@ xcrun simctl create "My iPhone" \
 Returns the new device UDID on success. Capture it:
 
 ```bash
-UDID=$(xcrun simctl create "My iPhone" "iPhone 17 Pro" "iOS 26.2")
+PROJECT=$(git remote get-url origin | sed 's/.*\///' | sed 's/\.git$//')
+UDID=$(xcrun simctl create "$PROJECT" "iPhone 17 Pro" "iOS 26.2")
 echo "Created: $UDID"
 ```
 
@@ -143,7 +157,8 @@ xcrun simctl terminate booted com.example.MyApp
 ### Create a fresh device, boot it, and open Simulator
 
 ```bash
-UDID=$(xcrun simctl create "Test Device" "iPhone 17 Pro" "iOS 26.2")
+PROJECT=$(git remote get-url origin | sed 's/.*\///' | sed 's/\.git$//')
+UDID=$(xcrun simctl create "$PROJECT" "iPhone 17 Pro" "iOS 26.2")
 xcrun simctl boot "$UDID"
 open -a Simulator
 ```
