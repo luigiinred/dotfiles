@@ -53,12 +53,12 @@ Store the result as `BUNDLE_ID`.
 
 ### Find simulator (project-branch naming convention)
 
-Simulators are named `{project_dir} - {git_branch}`, where `project_dir` is the basename of the workspace root and `git_branch` is the current git branch. This ensures each project+branch combination has its own isolated simulator.
+Simulators are named `{project} - {git_branch}`, where `project` is derived from the git remote URL and `git_branch` is the current git branch. This ensures each project+branch combination has its own isolated simulator.
 
 ```bash
-PROJECT_DIR=$(basename "$(pwd)")
+PROJECT=$(git remote get-url origin | sed 's/.*\///' | sed 's/\.git$//')
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-SIM_NAME="${PROJECT_DIR} - ${GIT_BRANCH}"
+SIM_NAME="${PROJECT} - ${GIT_BRANCH}"
 echo "SIM_NAME: $SIM_NAME"
 ```
 
@@ -117,7 +117,7 @@ xcrun simctl launch "$DEVICE_UDID" "$BUNDLE_ID"
 
 ## Workspace Rule Override
 
-If the project has a `.cursor/rules/build-and-run-verification.mdc` workspace rule with hardcoded values (workspace, scheme, bundle ID), prefer those values over auto-detection for those specific settings. The workspace rule is authoritative for that project. The simulator naming convention (`{project_dir} - {git_branch}`) always applies regardless of workspace rule.
+If the project has a `.cursor/rules/build-and-run-verification.mdc` workspace rule with hardcoded values (workspace, scheme, bundle ID), prefer those values over auto-detection for those specific settings. The workspace rule is authoritative for that project. The simulator naming convention (`{project} - {git_branch}`, where project comes from the git remote) always applies regardless of workspace rule.
 
 ## Troubleshooting
 
