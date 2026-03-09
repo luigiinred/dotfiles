@@ -94,28 +94,48 @@ fi
 
 ### Boot emulator
 
-```bash
-# Check if an emulator is already running
-RUNNING_SERIAL=$(adb devices | grep emulator | head -1 | awk '{print $1}')
+Multiple emulators can run simultaneously (one per worktree/branch). NEVER shut down other running emulators — they belong to other worktrees.
 
-if [ -z "$RUNNING_SERIAL" ]; then
-  # Launch emulator in background
+Each running emulator gets a unique serial (`emulator-5554`, `emulator-5556`, etc.). To find *this* AVD's serial, query the AVD name property on each running emulator.
+
+```bash
+# Snapshot running emulators BEFORE boot so we can identify the new one
+SERIALS_BEFORE=$(adb devices | grep 'emulator-' | awk '{print $1}')
+
+# Check if this AVD is already running
+DEVICE_SERIAL=""
+for SERIAL in $SERIALS_BEFORE; do
+  AVD_ON_SERIAL=$(adb -s "$SERIAL" emu avd name 2>/dev/null | head -1 | tr -d '\r')
+  if [ "$AVD_ON_SERIAL" = "$AVD_NAME" ]; then
+    DEVICE_SERIAL="$SERIAL"
+    echo "AVD '$AVD_NAME' already running on $DEVICE_SERIAL"
+    break
+  fi
+done
+
+if [ -z "$DEVICE_SERIAL" ]; then
+  # Boot this AVD alongside any others already running
   nohup $ANDROID_HOME/emulator/emulator -avd "$AVD_NAME" -no-snapshot-load &>/dev/null &
   echo "Booting emulator '$AVD_NAME'..."
 
-  # Wait for device to come online
-  adb wait-for-device
-  # Wait for boot to complete
-  while [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
+  # Wait for a NEW emulator serial to appear
+  while true; do
+    sleep 2
+    for SERIAL in $(adb devices | grep 'emulator-' | awk '{print $1}'); do
+      if ! echo "$SERIALS_BEFORE" | grep -qx "$SERIAL"; then
+        DEVICE_SERIAL="$SERIAL"
+        break 2
+      fi
+    done
+  done
+  echo "New emulator appeared on $DEVICE_SERIAL"
+
+  # Wait for boot to complete on THIS specific emulator
+  while [ "$(adb -s "$DEVICE_SERIAL" shell getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
     sleep 2
   done
-  echo "Emulator booted"
-  DEVICE_SERIAL=$(adb devices | grep emulator | head -1 | awk '{print $1}')
-else
-  echo "Emulator already running: $RUNNING_SERIAL"
-  DEVICE_SERIAL="$RUNNING_SERIAL"
+  echo "Emulator '$AVD_NAME' booted on $DEVICE_SERIAL"
 fi
-echo "DEVICE_SERIAL: $DEVICE_SERIAL"
 ```
 
 If a physical device is connected and preferred, use its serial instead. List devices with `adb devices`.
@@ -171,4 +191,4 @@ If the project has a `.cursor/rules/build-and-run-verification.mdc` workspace ru
 - **App won't launch**: Verify `APP_ID` matches the flavor's application ID. Check `adb logcat` for crash logs.
 - **Gradle daemon issues**: Run `$GRADLE_CMD --stop` to kill stale daemons, then rebuild.
 - **Emulator won't boot**: Try `emulator -avd "$AVD_NAME" -wipe-data` to reset the emulator, or delete and recreate the AVD.
-- **Multiple devices**: If both emulator and physical device are connected, specify the target with `-s $DEVICE_SERIAL` on all `adb` commands.
+- **Multiple emulators**: Each worktree runs its own emulator in parallel. NEVER shut down emulators you didn't start — they belong to other worktrees. Always use `-s $DEVICE_SERIAL` on all `adb` commands to target the correct emulator. To identify which AVD is on which serial: `adb -s <serial> emu avd name`.
