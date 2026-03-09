@@ -51,51 +51,51 @@ xcodebuild $PROJECT_FLAG -scheme $SCHEME -showBuildSettings 2>/dev/null \
 
 Store the result as `BUNDLE_ID`.
 
-### Find simulator
+### Find simulator (project-branch naming convention)
 
-Use the preferred simulator if specified in a workspace rule. Otherwise pick a booted device or a recent iPhone:
+Simulators are named `{project_dir} - {git_branch}`, where `project_dir` is the basename of the workspace root and `git_branch` is the current git branch. This ensures each project+branch combination has its own isolated simulator.
 
 ```bash
-# Use already-booted simulator if available
-BOOTED=$(xcrun simctl list devices booted -j 2>/dev/null | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for runtime, devices in data.get('devices', {}).items():
-    for d in devices:
-        if d.get('state') == 'Booted':
-            print(d['name']); sys.exit(0)
-" 2>/dev/null)
+PROJECT_DIR=$(basename "$(pwd)")
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+SIM_NAME="${PROJECT_DIR} - ${GIT_BRANCH}"
+echo "SIM_NAME: $SIM_NAME"
+```
 
-if [ -z "$BOOTED" ]; then
-  # Pick the latest iPhone Pro simulator available
-  SIM_NAME=$(xcrun simctl list devices available -j 2>/dev/null | python3 -c "
-import json, sys, re
-data = json.load(sys.stdin)
-candidates = []
-for runtime, devices in data.get('devices', {}).items():
-    if 'iOS' not in runtime: continue
-    for d in devices:
-        name = d['name']
-        if 'iPhone' in name and d.get('isAvailable', False):
-            candidates.append(name)
-# Sort to prefer Pro models and higher numbers
-pro = [c for c in candidates if 'Pro' in c]
-pick = sorted(pro if pro else candidates, reverse=True)
-print(pick[0] if pick else '')
-" 2>/dev/null)
-  echo "SIM_NAME: ${SIM_NAME:-No simulator found}"
+Check if the simulator exists. If not, create it using the latest available iPhone Pro device type and iOS runtime:
+
+```bash
+SIM_EXISTS=$(xcrun simctl list devices available | grep "$SIM_NAME" | head -1)
+
+if [ -z "$SIM_EXISTS" ]; then
+  # Pick the latest iPhone Pro device type
+  DEVICE_TYPE=$(xcrun simctl list devicetypes | grep "iPhone.*Pro (" | head -1 | sed 's/.*(\(.*\))/\1/')
+  # Pick the latest iOS runtime
+  RUNTIME=$(xcrun simctl list runtimes available | grep "iOS" | tail -1 | sed 's/.*(\(.*\))/\1/')
+
+  echo "Creating simulator '$SIM_NAME' with device type $DEVICE_TYPE and runtime $RUNTIME"
+  SIM_UDID=$(xcrun simctl create "$SIM_NAME" "$DEVICE_TYPE" "$RUNTIME")
+  echo "Created: $SIM_UDID"
 else
-  SIM_NAME="$BOOTED"
-  echo "SIM_NAME (booted): $SIM_NAME"
+  echo "Simulator '$SIM_NAME' already exists"
 fi
+```
+
+Get the UDID for use in subsequent commands:
+
+```bash
+DEVICE_UDID=$(xcrun simctl list devices available | grep "$SIM_NAME" | head -1 | grep -oE '[0-9A-F-]{36}')
+echo "DEVICE_UDID: $DEVICE_UDID"
 ```
 
 ## Step 2: Build
 
 ```bash
-killall Simulator 2>/dev/null; sleep 0.5
+# Terminate any running instance first — the build may fail if the binary is in use
+xcrun simctl terminate "$DEVICE_UDID" "$BUNDLE_ID" 2>/dev/null
+
 xcodebuild $PROJECT_FLAG -scheme "$SCHEME" -configuration Debug \
-  -destination "platform=iOS Simulator,name=$SIM_NAME" \
+  -destination "platform=iOS Simulator,id=$DEVICE_UDID" \
   -derivedDataPath ./build build
 ```
 
@@ -105,23 +105,23 @@ If build fails, fix compilation errors before proceeding.
 
 ```bash
 # Boot simulator if needed
-xcrun simctl boot "$SIM_NAME" 2>/dev/null
+xcrun simctl boot "$DEVICE_UDID" 2>/dev/null
 open -a Simulator
 
 # Find the .app bundle
 APP_PATH=$(find ./build/Build/Products/Debug-iphonesimulator -name "*.app" -maxdepth 1 | head -1)
 
-xcrun simctl install booted "$APP_PATH"
-xcrun simctl launch booted "$BUNDLE_ID"
+xcrun simctl install "$DEVICE_UDID" "$APP_PATH"
+xcrun simctl launch "$DEVICE_UDID" "$BUNDLE_ID"
 ```
 
 ## Workspace Rule Override
 
-If the project has a `.cursor/rules/build-app.mdc` workspace rule with hardcoded values, prefer those values over auto-detection. The workspace rule is authoritative for that project.
+If the project has a `.cursor/rules/build-and-run-verification.mdc` workspace rule with hardcoded values (workspace, scheme, bundle ID), prefer those values over auto-detection for those specific settings. The workspace rule is authoritative for that project. The simulator naming convention (`{project_dir} - {git_branch}`) always applies regardless of workspace rule.
 
 ## Troubleshooting
 
-- **No simulator found**: Run `xcrun simctl list devices available` and pick one manually.
+- **No simulator found**: Run `xcrun simctl list devices available` and check naming.
 - **Signing errors**: Open the `.xcodeproj` in Xcode and fix Signing & Capabilities.
 - **Scheme not found**: Run `xcodebuild -list` to see available schemes and use the correct one.
 - **App won't launch**: Verify `BUNDLE_ID` matches the target's bundle identifier in build settings.
